@@ -16,14 +16,11 @@ use binance::errors::ErrorKind as BinanceLibErrorKind;
 fn main() {
     let api_key = Some("kuSUVSVAlMuVIJAptyR3Oy982xnbmDoPunPkms6CjDQCdEqvPluMBTjihmV1zVNg".into());
     let secret_key = Some("ahArnVH2s21G6DgKQpJB9g3g7RYTuIrffAeK7qBBmPlgwDdacljt66E67cAy5SB2".into());
-    let use_testnet = true;
 
-    let account: Account = if use_testnet {
-        let config = Config::default().set_rest_api_endpoint("https://testnet.binance.vision");
-        Binance::new_with_config(api_key, secret_key, &config)
-    } else {
-        Binance::new(api_key, secret_key)
-    };
+    let config = Config::default().set_rest_api_endpoint("https://testnet.binance.vision");
+    let account: Account = Binance::new_with_config(api_key, secret_key, &config);
+    let config = Config::default().set_rest_api_endpoint("https://testnet.binance.vision");
+    let market: Market = Binance::new_with_config(None, None, &config);
 
     let result = account.get_account();
     match result {
@@ -36,11 +33,16 @@ fn main() {
         Err(e) => println!("Error: {:?}", e),
     }
 
-    match account.market_sell("LTCUSDT", 505) {
+    /*match account.market_sell("LTCUSDT", 505) {
+        Ok(answer) => println!("{:?}", answer),
+        Err(e) => println!("Error: {:?}", e),
+    }*/
+
+    // Latest price for ONE symbol
+    match market.get_price("BNBUSDT") {
         Ok(answer) => println!("{:?}", answer),
         Err(e) => println!("Error: {:?}", e),
     }
-
 }
 
 
