@@ -6,5 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = "0.11"
+reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+hmac = "0.12.1"
+binance = { git = "https://github.com/wisespace-io/binance-rs.git" }
+
