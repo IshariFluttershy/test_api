@@ -30,6 +30,17 @@ fn main() {
         Ok(answer) => println!("{:?}", answer.balances),
         Err(e) => println!("Error: {:?}", e),
     }
+
+    match account.get_balance("LTC") {
+        Ok(answer) => println!("{:?}", answer),
+        Err(e) => println!("Error: {:?}", e),
+    }
+
+    match account.market_sell("LTCUSDT", 505) {
+        Ok(answer) => println!("{:?}", answer),
+        Err(e) => println!("Error: {:?}", e),
+    }
+
 }
 
 
