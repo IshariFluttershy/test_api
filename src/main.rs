@@ -10,6 +10,8 @@ use binance::account::*;
 use binance::market::*;
 use binance::model::KlineSummary;
 use binance::errors::ErrorKind as BinanceLibErrorKind;
+use binance::websockets::*;
+use std::sync::atomic::{AtomicBool};
 
 #[derive(Debug)]
 struct Candlestick {
@@ -23,80 +25,69 @@ fn main() {
     let api_key = Some("kuSUVSVAlMuVIJAptyR3Oy982xnbmDoPunPkms6CjDQCdEqvPluMBTjihmV1zVNg".into());
     let secret_key = Some("ahArnVH2s21G6DgKQpJB9g3g7RYTuIrffAeK7qBBmPlgwDdacljt66E67cAy5SB2".into());
 
+    //let futures_api_key = Some("6e2439bdb37395afb6d6a6a7d33c93811c0dc2f4900e0638ff375ba66d63fae8".into());
+    //let futures_secret_key = Some("56e8e3153a0503f45ab6e88614e3a313093b28487a748e87f320c2a9c10a43f1".into());
+
     let config = Config::default().set_rest_api_endpoint("https://testnet.binance.vision");
     let account: Account = Binance::new_with_config(api_key, secret_key, &config);
-    let config = Config::default().set_rest_api_endpoint("https://testnet.binance.vision");
-    let market: Market = Binance::new_with_config(None, None, &config);
 
-    let result = account.get_account();
-    /*match result {
-        Ok(answer) => println!("{:?}", answer.balances),
+    match account.market_buy("BTCUSDT", 5) {
+        Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {:?}", e),
     }
 
-    match account.get_balance("LTC") {
-        Ok(answer) => println!("{:?}", answer),
+    match account.get_account() {
+        Ok(answer) => println!("{:#?}", answer.balances),
         Err(e) => println!("Error: {:?}", e),
     }
 
-    /*match account.market_sell("LTCUSDT", 5) {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {:?}", e),
-    }*/
-
-    // Latest price for ONE symbol
-    match market.get_price("BNBUSDT") {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {:?}", e),
-    }*/
-
-    // last 10 5min klines (candlesticks) for a symbol:
-    let mut klines = vec![];
-    match market.get_klines("BNBUSDT", "5m", 10, None, None) {
-        Ok(tmpKlines) => {   
-            match tmpKlines {
-                binance::model::KlineSummaries::AllKlineSummaries(tmpKlines) => {
-
-                    for kline in tmpKlines.clone() {
-                        println!(
-                            "Open: {}, High: {}, Low: {}",
-                            kline.open, kline.high, kline.low
-                        )
+    let mut count = 0;
+    let keep_running = AtomicBool::new(true); // Used to control the event loop
+    let kline = format!("{}", "btcbusd@kline_1m");
+    let mut web_socket = WebSockets::new(|event: WebsocketEvent| {
+        match event {
+            WebsocketEvent::Kline(kline_event) => {
+                count += 1;
+                println!("Symbol: {}, high: {}, low: {}, count: {}", kline_event.kline.symbol, kline_event.kline.high.parse::<f32>().unwrap().round(), kline_event.kline.low.parse::<f32>().unwrap().round(), count);
+                if count%20 == 0 {
+                    match account.market_buy("BTCBUSD", 0.001) {
+                        Ok(answer) => {
+                            println!("{:#?}", answer);
+                            match account.limit_sell("BTCBUSD", 0.001, answer.price+5.0) {
+                                Ok(answer) => println!("{:#?}", answer),
+                                Err(e) => println!("Error: {:?}", e),
+                            }
+                            match account.limit_sell("BTCBUSD", 0.001, answer.price-5.0) {
+                                Ok(answer) => println!("{:#?}", answer),
+                                Err(e) => println!("Error: {:?}", e),
+                            }
+                        }
+                        Err(e) => println!("Error: {:?}", e),
                     }
-                    //let kline: KlineSummary = klines[0].clone(); // You need to iterate over the klines
-                    klines = tmpKlines.clone();
                 }
-            }
-        },
-        Err(e) => println!("Error: {}", e),
-    }
-
-	println!("klines are == {:#?}", klines.clone());
-
-    let candles = vec![
-		Candlestick { open: 13.00, high: 14.00, low: 12.50, close: 12.50 },
-	    Candlestick { open: 12.50, high: 13.50, low: 11.50, close: 12.00 },
-	    Candlestick { open: 12.00, high: 12.50, low: 11.00, close: 10.00 },
-	    Candlestick { open: 10.00, high: 11.00, low: 9.00, close: 10.50 },
-	    Candlestick { open: 10.50, high: 12.00, low: 10.00, close: 11.50 },
-	    Candlestick { open: 11.50, high: 12.50, low: 11.00, close: 11.00 },
-	    Candlestick { open: 11.00, high: 12.00, low: 10.50, close: 11.50 },
-	    Candlestick { open: 11.50, high: 13.00, low: 11.00, close: 12.50 },
-	    Candlestick { open: 12.50, high: 14.00, low: 12.00, close: 13.00 },
-	    Candlestick { open: 13.00, high: 14.50, low: 12.50, close: 13.50 },
-	    Candlestick { open: 13.50, high: 14.00, low: 12.50, close: 13.00 },
-	    Candlestick { open: 13.00, high: 14.00, low: 12.50, close: 12.50 },
-	    Candlestick { open: 12.50, high: 13.50, low: 11.50, close: 12.00 },
-	    Candlestick { open: 12.00, high: 12.50, low: 11.00, close: 11.50 },
-	    Candlestick { open: 11.50, high: 12.50, low: 10.50, close: 12.00 },
-	];
-	
-	let result = is_w_pattern(&candles);
-	println!("result is == {}", result);
+            },
+            _ => (),
+        };
+        Ok(())
+    });
+ 
+    web_socket.connect(&kline).unwrap(); // check error
+    if let Err(e) = web_socket.event_loop(&keep_running) {
+        match e {
+          err => {
+             println!("Error: {:?}", err);
+          }
+        }
+     }
+     web_socket.disconnect().unwrap();
 }
 
+
+
+
+
 // Define a function to check for a W pattern
-fn is_w_pattern(candles: &[Candlestick]) -> bool {
+fn is_w_pattern(candles: &[KlineSummary]) -> bool {
     // Make sure we have at least 5 candles
     if candles.len() < 5 {
         return false;
@@ -104,12 +95,12 @@ fn is_w_pattern(candles: &[Candlestick]) -> bool {
 
 	let lowest = candles.into_iter().fold(None, |min, x| match min {
 	    None => Some(x),
-	    Some(y) => Some(if x.low < y.low { x } else { y }),
+	    Some(y) => Some(if x.low.parse::<f32>().unwrap() < y.low.parse::<f32>().unwrap() { x } else { y }),
 	}).unwrap();
 
 	let highest = candles.into_iter().fold(None, |max, x| match max {
 	    None => Some(x),
-	    Some(y) => Some(if x.high > y.high { x } else { y }),
+	    Some(y) => Some(if x.high.parse::<f32>().unwrap() > y.high.parse::<f32>().unwrap() { x } else { y }),
 	}).unwrap();
 
 
@@ -124,12 +115,12 @@ fn is_w_pattern(candles: &[Candlestick]) -> bool {
 
         // Check for the W pattern
         for i in 2..candles.len() {
-            if candles[i].high < candles[i - 1].high && candles[i].low < candles[i - 1].low {
-                if is_w && candles[i].low < low_point {
+            if candles[i].high.parse::<f32>().unwrap() < candles[i - 1].high.parse::<f32>().unwrap() && candles[i].low.parse::<f32>().unwrap() < candles[i - 1].low.parse::<f32>().unwrap() {
+                if is_w && candles[i].low.parse::<f32>().unwrap() < low_point {
                     return true;
                 }
                 is_w = !is_w;
-                low_point = candles[i].low;
+                low_point = candles[i].low.parse::<f32>().unwrap();
             }
         }
     }
