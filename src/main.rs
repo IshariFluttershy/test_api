@@ -11,7 +11,13 @@ use binance::market::*;
 use binance::model::KlineSummary;
 use binance::errors::ErrorKind as BinanceLibErrorKind;
 
-
+#[derive(Debug)]
+struct Candlestick {
+    open: f64,
+    high: f64,
+    low: f64,
+    close: f64,
+}
 
 fn main() {
     let api_key = Some("kuSUVSVAlMuVIJAptyR3Oy982xnbmDoPunPkms6CjDQCdEqvPluMBTjihmV1zVNg".into());
@@ -23,7 +29,7 @@ fn main() {
     let market: Market = Binance::new_with_config(None, None, &config);
 
     let result = account.get_account();
-    match result {
+    /*match result {
         Ok(answer) => println!("{:?}", answer.balances),
         Err(e) => println!("Error: {:?}", e),
     }
@@ -33,7 +39,7 @@ fn main() {
         Err(e) => println!("Error: {:?}", e),
     }
 
-    /*match account.market_sell("LTCUSDT", 505) {
+    /*match account.market_sell("LTCUSDT", 5) {
         Ok(answer) => println!("{:?}", answer),
         Err(e) => println!("Error: {:?}", e),
     }*/
@@ -42,7 +48,93 @@ fn main() {
     match market.get_price("BNBUSDT") {
         Ok(answer) => println!("{:?}", answer),
         Err(e) => println!("Error: {:?}", e),
+    }*/
+
+    // last 10 5min klines (candlesticks) for a symbol:
+    let mut klines = vec![];
+    match market.get_klines("BNBUSDT", "5m", 10, None, None) {
+        Ok(tmpKlines) => {   
+            match tmpKlines {
+                binance::model::KlineSummaries::AllKlineSummaries(tmpKlines) => {
+
+                    for kline in tmpKlines.clone() {
+                        println!(
+                            "Open: {}, High: {}, Low: {}",
+                            kline.open, kline.high, kline.low
+                        )
+                    }
+                    //let kline: KlineSummary = klines[0].clone(); // You need to iterate over the klines
+                    klines = tmpKlines.clone();
+                }
+            }
+        },
+        Err(e) => println!("Error: {}", e),
     }
+
+	println!("klines are == {:#?}", klines.clone());
+
+    let candles = vec![
+		Candlestick { open: 13.00, high: 14.00, low: 12.50, close: 12.50 },
+	    Candlestick { open: 12.50, high: 13.50, low: 11.50, close: 12.00 },
+	    Candlestick { open: 12.00, high: 12.50, low: 11.00, close: 10.00 },
+	    Candlestick { open: 10.00, high: 11.00, low: 9.00, close: 10.50 },
+	    Candlestick { open: 10.50, high: 12.00, low: 10.00, close: 11.50 },
+	    Candlestick { open: 11.50, high: 12.50, low: 11.00, close: 11.00 },
+	    Candlestick { open: 11.00, high: 12.00, low: 10.50, close: 11.50 },
+	    Candlestick { open: 11.50, high: 13.00, low: 11.00, close: 12.50 },
+	    Candlestick { open: 12.50, high: 14.00, low: 12.00, close: 13.00 },
+	    Candlestick { open: 13.00, high: 14.50, low: 12.50, close: 13.50 },
+	    Candlestick { open: 13.50, high: 14.00, low: 12.50, close: 13.00 },
+	    Candlestick { open: 13.00, high: 14.00, low: 12.50, close: 12.50 },
+	    Candlestick { open: 12.50, high: 13.50, low: 11.50, close: 12.00 },
+	    Candlestick { open: 12.00, high: 12.50, low: 11.00, close: 11.50 },
+	    Candlestick { open: 11.50, high: 12.50, low: 10.50, close: 12.00 },
+	];
+	
+	let result = is_w_pattern(&candles);
+	println!("result is == {}", result);
+}
+
+// Define a function to check for a W pattern
+fn is_w_pattern(candles: &[Candlestick]) -> bool {
+    // Make sure we have at least 5 candles
+    if candles.len() < 5 {
+        return false;
+    }
+
+	let lowest = candles.into_iter().fold(None, |min, x| match min {
+	    None => Some(x),
+	    Some(y) => Some(if x.low < y.low { x } else { y }),
+	}).unwrap();
+
+	let highest = candles.into_iter().fold(None, |max, x| match max {
+	    None => Some(x),
+	    Some(y) => Some(if x.high > y.high { x } else { y }),
+	}).unwrap();
+
+
+	
+	println!("lowest is == {:#?}", lowest);
+	println!("highest is == {:#?}", highest);
+	
+    // Check for the first two candles forming a downward trend
+    if candles[0].high > candles[1].high && candles[0].low > candles[1].low {
+        let mut is_w = true;
+        let mut low_point = 0.0;
+
+        // Check for the W pattern
+        for i in 2..candles.len() {
+            if candles[i].high < candles[i - 1].high && candles[i].low < candles[i - 1].low {
+                if is_w && candles[i].low < low_point {
+                    return true;
+                }
+                is_w = !is_w;
+                low_point = candles[i].low;
+            }
+        }
+    }
+
+    false
 }
 
 
