@@ -1,3 +1,4 @@
+mod patterns;
 
 use binance::futures::market::FuturesMarket;
 use binance::api::*;
@@ -7,6 +8,7 @@ use binance::account::*;
 use binance::futures::account::*;
 use binance::futures::market::*;
 use std::sync::atomic::{AtomicBool};
+use crate::patterns::find_w_pattern;
 
 fn main() {
     let futures_api_key = Some("6e2439bdb37395afb6d6a6a7d33c93811c0dc2f4900e0638ff375ba66d63fae8".into());
@@ -23,7 +25,7 @@ fn main() {
     }
 
     let price: Option<f64> = match market.get_price("BTCUSDT") {
-        Ok(answer) => { 
+        Ok(answer) => {
             println!("{:#?}", answer);
             Some(answer.price)
         }
@@ -32,8 +34,8 @@ fn main() {
             None
         }
     };
-
-    match account.market_buy("BTCUSDT", 0.1) {
+    find_w_pattern();
+    /*match account.market_buy("BTCUSDT", 0.1) {
         Ok(answer) => {
             println!("{:#?}", answer);
             match account.stop_market_close_sell("BTCUSDT", price.unwrap()-500.0) {
@@ -46,7 +48,7 @@ fn main() {
             }
         }
         Err(e) => println!("Error: {:?}", e),
-    }
+    }*/
 }
 
 fn tp_market_close(symbol: &str, stop_price: f64, side: OrderSide) -> CustomOrderRequest {
