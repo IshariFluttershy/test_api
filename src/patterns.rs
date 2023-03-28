@@ -24,22 +24,7 @@ pub struct MathKLine {
     pub taker_buy_quote_asset_volume: String,
 }
 
-pub fn find_w_pattern() -> Option<WPattern>{
-    let vec = unsafe {
-        vec![
-            create_test_kline(13., 12.), // 0
-            create_test_kline(12., 11.), // 1
-            create_test_kline(11., 10.), // 2
-            create_test_kline(10., 11.), // 3
-            create_test_kline(11., 12.), // 4
-            create_test_kline(12., 11.), // 5
-            create_test_kline(11., 12.), // 6
-            create_test_kline(12., 13.), // 7
-            create_test_kline(13., 14.), // 8
-            create_test_kline(14., 15.)  // 9
-        ]
-    };
-
+pub fn find_w_pattern(vec: Vec<MathKLine>) -> Option<WPattern>{
     let start_index: usize;
     let second_v_index: usize;
     let end_index: usize;
@@ -49,20 +34,14 @@ pub fn find_w_pattern() -> Option<WPattern>{
 
     // Not enough KLines or upward trend
     if vec.len() < 5 || vec[0].close > vec[0].open{
-        println!("1");
         return None;
     }
 
     // Get start of new upward trend
-    start_index = if let Option::Some(result) = vec.iter().position(|elem| {
-            println!("close = {} -- open = {}", elem.close, elem.open);
-            elem.close > elem.open
-        }
-    ) {
+    start_index = if let Option::Some(result) = vec.iter().position(|elem| elem.close > elem.open) {
         lower_price = vec[result].low;
         result
     } else {
-        println!("2");
         return None;
     };
 
@@ -71,19 +50,16 @@ pub fn find_w_pattern() -> Option<WPattern>{
         neckline_price = vec[*result-1].high;
         *result + start_index
     } else {
-        println!("3");
         return None;
     };
 
     // Find the continuation on upward trend + check if lower price breaks
     second_v_index = if let Some(result) = &vec[neckline_index..].iter().position(|elem| elem.close > elem.open) {
         if vec[*result].low < lower_price {
-            println!("4");
             return None;
         }
         *result + neckline_index
     } else {
-        println!("5");
         return None;
     };
 
@@ -91,7 +67,6 @@ pub fn find_w_pattern() -> Option<WPattern>{
     end_index = if let Some(result) = &vec[second_v_index..].iter().position(|elem| elem.high > neckline_price) {
         *result + second_v_index
     } else {
-        println!("6");
         return None;
     };
 
