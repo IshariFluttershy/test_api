@@ -34,7 +34,9 @@ fn main() {
             None
         }
     };
-    find_w_pattern();
+    let result = find_w_pattern();
+
+    println!("{:#?}", result);
     /*match account.market_buy("BTCUSDT", 0.1) {
         Ok(answer) => {
             println!("{:#?}", answer);
