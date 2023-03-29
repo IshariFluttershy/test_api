@@ -7,7 +7,12 @@ enum Status {
     NotOpened,
     NotTriggered,
     Running,
-    Won,
+    Closed(TradeResult)
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum TradeResult {
+    Win,
     Lost,
     Unknown
 }
@@ -28,7 +33,7 @@ pub struct Backtester {
 impl Backtester {
     pub fn new(klines_data: KlineSummaries) -> Self {
         Backtester {
-            klines_data: Self::toAllMathKLine(klines_data),
+            klines_data: Self::to_all_math_kline(klines_data),
             trades: Vec::new()
         }
     }
@@ -75,11 +80,11 @@ impl Backtester {
 
                 if kline.close_time > trade.open_time && trade.status == Status::Running {
                     if Self::hit_price(trade.sl, &kline) && Self::hit_price(trade.tp, &kline) {
-                        trade.status = Status::Unknown;
+                        trade.status = Status::Closed(TradeResult::Unknown);
                     } else if Self::hit_price(trade.sl, &kline) {
-                        trade.status = Status::Lost;
+                        trade.status = Status::Closed(TradeResult::Lost);
                     } else if Self::hit_price(trade.tp, &kline) {
-                        trade.status = Status::Won;
+                        trade.status = Status::Closed(TradeResult::Win);
                     }
                 }
             });
@@ -87,11 +92,17 @@ impl Backtester {
         println!("All trades resolved");
     }
 
+    pub fn get_closed_ratio(&self, trade_result: TradeResult) -> f32 {
+        let result = self.trades.iter().filter(|&trade| trade.status == Status::Closed(trade_result)).count()*100;
+        let result = result as f32/self.trades.iter().filter(|&trade| matches!(trade.status, Status::Closed{..})).count() as f32;
+        result
+    }
+
     fn hit_price(price: f64, kline: &MathKLine) -> bool {
         price <= kline.high && price >= kline.low
     }
 
-    fn toMathKLine(kline: &KlineSummary) -> MathKLine{
+    fn to_math_kline(kline: &KlineSummary) -> MathKLine{
         MathKLine {
             open_time: kline.open_time,
             open: kline.open.parse::<f64>().unwrap(),
@@ -107,12 +118,12 @@ impl Backtester {
         }
     }
 
-    fn toAllMathKLine(klines: KlineSummaries) -> Vec<MathKLine>{
+    fn to_all_math_kline(klines: KlineSummaries) -> Vec<MathKLine>{
         let mut result: Vec<MathKLine> = Vec::new();
         match klines {
             KlineSummaries::AllKlineSummaries(all) => {
                 for kline in all.iter() {
-                    result.push(Self::toMathKLine(kline));
+                    result.push(Self::to_math_kline(kline));
                 }
             }
         }

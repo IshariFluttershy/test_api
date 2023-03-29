@@ -90,6 +90,10 @@ fn main() {
 
     let mut backtester = Backtester::new(klines.unwrap());
     backtester.start();
+    println!("winratio == {}%", backtester.get_closed_ratio(TradeResult::Win));
+    println!("lossratio == {}%", backtester.get_closed_ratio(TradeResult::Lost));
+    println!("unknownratio == {}%", backtester.get_closed_ratio(TradeResult::Unknown));
+
 
     /*match account.market_buy("BTCUSDT", 0.1) {
         Ok(answer) => {
