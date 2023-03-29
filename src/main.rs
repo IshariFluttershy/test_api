@@ -35,7 +35,7 @@ fn main() {
         }
     };
 
-    let vec = unsafe {
+    let vec_w = unsafe {
         vec![
             create_test_kline(13., 12.), // 0
             create_test_kline(12., 11.), // 1
@@ -49,9 +49,32 @@ fn main() {
             create_test_kline(14., 15.)  // 9
         ]
     };
-    let result = find_w_pattern(vec);
 
+    let vec_m = unsafe {
+        vec![
+            create_test_kline(10., 11.), // 0
+            create_test_kline(11., 12.), // 1
+            create_test_kline(12., 13.), // 2
+            create_test_kline(13., 12.), // 3
+            create_test_kline(12., 11.), // 4
+            create_test_kline(11., 12.), // 5
+            create_test_kline(12., 11.), // 6
+            create_test_kline(11., 10.), // 7
+            create_test_kline(10., 9.), // 8
+            create_test_kline(9., 8.)  // 9
+        ]
+    };
+    let result = find_w_pattern(&vec_w);
     println!("{:#?}", result);
+    let result = find_w_pattern(&vec_m);
+    println!("{:#?}", result);
+    let result = find_m_pattern(&vec_w);
+    println!("{:#?}", result);
+    let result = find_m_pattern(&vec_m);
+    println!("{:#?}", result);
+
+
+
     /*match account.market_buy("BTCUSDT", 0.1) {
         Ok(answer) => {
             println!("{:#?}", answer);

@@ -10,6 +10,14 @@ pub struct WPattern {
     neckline_price: f64
 }
 
+#[derive(Debug)]
+pub struct MPattern {
+    start_index: usize,
+    end_index: usize,
+    higher_price: f64,
+    neckline_price: f64
+}
+
 pub struct MathKLine {
     pub open_time: i64,
     pub open: f64,
@@ -24,7 +32,7 @@ pub struct MathKLine {
     pub taker_buy_quote_asset_volume: String,
 }
 
-pub fn find_w_pattern(vec: Vec<MathKLine>) -> Option<WPattern>{
+pub fn find_w_pattern(vec: &Vec<MathKLine>) -> Option<WPattern>{
     let start_index: usize;
     let second_v_index: usize;
     let end_index: usize;
@@ -71,6 +79,55 @@ pub fn find_w_pattern(vec: Vec<MathKLine>) -> Option<WPattern>{
     };
 
     Some(WPattern { start_index, end_index, lower_price, neckline_price })
+}
+
+pub fn find_m_pattern(vec: &Vec<MathKLine>) -> Option<MPattern>{
+    let start_index: usize;
+    let second_v_index: usize;
+    let end_index: usize;
+    let neckline_index: usize;
+    let higher_price: f64;
+    let neckline_price: f64;
+
+    // Not enough KLines or upward trend
+    if vec.len() < 5 || vec[0].close < vec[0].open{
+        return None;
+    }
+
+    // Get start of new upward trend
+    start_index = if let Option::Some(result) = vec.iter().position(|elem| elem.close < elem.open) {
+        higher_price = vec[result].high;
+        result
+    } else {
+        return None;
+    };
+
+    // Get neckline KLine
+    neckline_index = if let Option::Some(result) = &vec[start_index..].iter().position(|elem| elem.open < elem.close) {
+        neckline_price = vec[*result-1].low;
+        *result + start_index
+    } else {
+        return None;
+    };
+
+    // Find the continuation on upward trend + check if lower price breaks
+    second_v_index = if let Some(result) = &vec[neckline_index..].iter().position(|elem| elem.close < elem.open) {
+        if vec[*result].high > higher_price {
+            return None;
+        }
+        *result + neckline_index
+    } else {
+        return None;
+    };
+
+    // Find the KLine that breaks the neckline price
+    end_index = if let Some(result) = &vec[second_v_index..].iter().position(|elem| elem.low < neckline_price) {
+        *result + second_v_index
+    } else {
+        return None;
+    };
+
+    Some(MPattern { start_index, end_index, higher_price, neckline_price })
 }
 
 pub unsafe fn create_test_kline(open: f64, close: f64) -> MathKLine {
