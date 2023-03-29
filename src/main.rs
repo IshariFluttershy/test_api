@@ -1,14 +1,17 @@
 mod patterns;
+mod backtest;
 
+use binance::model::KlineSummaries;
+use binance::model::KlineSummary;
 use binance::futures::market::FuturesMarket;
 use binance::api::*;
 use binance::config::*;
 use binance::futures::*;
 use binance::account::*;
 use binance::futures::account::*;
-use binance::futures::market::*;
-use std::sync::atomic::{AtomicBool};
 use crate::patterns::*;
+use crate::backtest::*;
+
 
 fn main() {
     let futures_api_key = Some("6e2439bdb37395afb6d6a6a7d33c93811c0dc2f4900e0638ff375ba66d63fae8".into());
@@ -73,7 +76,20 @@ fn main() {
     let result = find_m_pattern(&vec_m);
     println!("{:#?}", result);
 
+    let klines: Option<KlineSummaries> = match market.get_klines("BTCUSDT", "1m", 1000, None, None) {
+        Ok(answer) => {
+            println!("{:#?}", answer);
+            Some(answer)
+        }
+        Err(e) => {
+            println!("Error: {:?}", e);
+            None
+        }
+    };
 
+
+    let mut backtester = Backtester::new(klines.unwrap());
+    backtester.start();
 
     /*match account.market_buy("BTCUSDT", 0.1) {
         Ok(answer) => {

@@ -4,18 +4,20 @@ static mut KLINE_TIME: i64 = 0;
 
 #[derive(Debug)]
 pub struct WPattern {
-    start_index: usize,
-    end_index: usize,
-    lower_price: f64,
-    neckline_price: f64
+    pub start_index: usize,
+    pub end_index: usize,
+    pub end_time: i64,
+    pub lower_price: f64,
+    pub neckline_price: f64
 }
 
 #[derive(Debug)]
 pub struct MPattern {
-    start_index: usize,
-    end_index: usize,
-    higher_price: f64,
-    neckline_price: f64
+    pub start_index: usize,
+    pub end_index: usize,
+    pub end_time: i64,
+    pub higher_price: f64,
+    pub neckline_price: f64
 }
 
 pub struct MathKLine {
@@ -39,6 +41,8 @@ pub fn find_w_pattern(vec: &Vec<MathKLine>) -> Option<WPattern>{
     let neckline_index: usize;
     let lower_price: f64;
     let neckline_price: f64;
+    let end_time: i64;
+
 
     // Not enough KLines or upward trend
     if vec.len() < 5 || vec[0].close > vec[0].open{
@@ -73,12 +77,13 @@ pub fn find_w_pattern(vec: &Vec<MathKLine>) -> Option<WPattern>{
 
     // Find the KLine that breaks the neckline price
     end_index = if let Some(result) = &vec[second_v_index..].iter().position(|elem| elem.high > neckline_price) {
+        end_time = vec[*result].close_time;
         *result + second_v_index
     } else {
         return None;
     };
 
-    Some(WPattern { start_index, end_index, lower_price, neckline_price })
+    Some(WPattern { start_index, end_index, end_time, lower_price, neckline_price })
 }
 
 pub fn find_m_pattern(vec: &Vec<MathKLine>) -> Option<MPattern>{
@@ -88,6 +93,7 @@ pub fn find_m_pattern(vec: &Vec<MathKLine>) -> Option<MPattern>{
     let neckline_index: usize;
     let higher_price: f64;
     let neckline_price: f64;
+    let end_time: i64;
 
     // Not enough KLines or upward trend
     if vec.len() < 5 || vec[0].close < vec[0].open{
@@ -122,12 +128,13 @@ pub fn find_m_pattern(vec: &Vec<MathKLine>) -> Option<MPattern>{
 
     // Find the KLine that breaks the neckline price
     end_index = if let Some(result) = &vec[second_v_index..].iter().position(|elem| elem.low < neckline_price) {
+        end_time = vec[*result].close_time;
         *result + second_v_index
     } else {
         return None;
     };
 
-    Some(MPattern { start_index, end_index, higher_price, neckline_price })
+    Some(MPattern { start_index, end_index, end_time, higher_price, neckline_price })
 }
 
 pub unsafe fn create_test_kline(open: f64, close: f64) -> MathKLine {
