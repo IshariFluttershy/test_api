@@ -2,6 +2,7 @@ mod patterns;
 mod backtest;
 
 use binance::futures::general::FuturesGeneral;
+use binance::market::Market;
 use binance::model::KlineSummaries;
 use binance::model::KlineSummary;
 use binance::futures::market::FuturesMarket;
@@ -10,6 +11,11 @@ use binance::config::*;
 use binance::futures::*;
 use binance::account::*;
 use binance::futures::account::*;
+use serde::{Serialize, Deserialize};
+use std::fs::File;
+use std::io::prelude::*;
+use std::env;
+use std::fs;
 use crate::patterns::*;
 use crate::backtest::*;
 
@@ -24,7 +30,7 @@ fn main() {
     //let general: FuturesGeneral = Binance::new_with_config(None, None, &config);
 
     //let account: FuturesAccount = Binance::new_with_config(futures_api_key, futures_secret_key, &config);
-    let market: FuturesMarket = Binance::new(None, None);
+    let market: Market = Binance::new(None, None);
     let general: FuturesGeneral = Binance::new(None, None);
 
     match account.account_balance() {
@@ -53,32 +59,13 @@ fn main() {
         Err(e) => println!("Error: {}", e),
     }
 
-    //return;
-    let mut i = 1;
-    let mut start_time = server_time - (i*60*1000*1000);
-    let mut end_time = server_time - ((i-1)*60*1000*1000);
 
-    let mut klines = Vec::new();
-    while let Ok(mut retreive_klines) = market.get_klines("BTCUSDT", "1m", 1000, start_time, end_time) {
-        if i <= 0 {
-            break;
-        }
-        if let KlineSummaries::AllKlineSummaries(mut retreived_vec) = retreive_klines {
-            klines.append(&mut retreived_vec);
-        }
-
-        start_time = end_time+1000*60;
-        end_time = start_time + 60*1000*1000;
-
-        i-=1;
-        if i%10 == 0 {
-            println!("Retreived {}0 bench of klines data", i/10);
-        }
-    };
-
-    /*println!("{:#?}", klines[100]);
-    println!("{:#?}", klines[1100]);
-    println!("{:#?}", klines[2100]);*/
+    let mut klines;
+    if let Ok(content) = fs::read_to_string("testdata.json") {
+        klines = serde_json::from_str(&content).unwrap();
+    } else {
+        klines = retreive_test_data(server_time, &market);
+    }
 
 
 
@@ -111,6 +98,35 @@ fn main() {
         }
         Err(e) => println!("Error: {:?}", e),
     }*/
+}
+
+fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
+    let mut i = 50;
+    let mut start_time = server_time - (i*60*1000*1000);
+    let mut end_time = server_time - ((i-1)*60*1000*1000);
+
+    let mut klines = Vec::new();
+    while let Ok(mut retreive_klines) = market.get_klines("BTCUSDT", "1m", 1000, start_time, end_time) {
+        if i <= 0 {
+            break;
+        }
+        if let KlineSummaries::AllKlineSummaries(mut retreived_vec) = retreive_klines {
+            klines.append(&mut retreived_vec);
+        }
+
+        start_time = end_time+1000*60;
+        end_time = start_time + 60*1000*1000;
+
+        i-=1;
+        if i%10 == 0 {
+            println!("Retreived {}0 bench of klines data", i/10);
+        }
+    };
+
+    let serialized = serde_json::to_string(&klines).unwrap();
+    let mut file = File::create("testdata.json").unwrap();
+    file.write_all(serialized.as_bytes()).unwrap();
+    klines
 }
 
 fn tp_market_close(symbol: &str, stop_price: f64, side: OrderSide) -> CustomOrderRequest {
