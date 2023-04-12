@@ -62,9 +62,13 @@ fn main() {
 
     let mut klines;
     if let Ok(content) = fs::read_to_string("testdata.json") {
+        println!("data file found, deserializing");
         klines = serde_json::from_str(&content).unwrap();
+        println!("deserializing finished");
     } else {
+        println!("NO data file found, retreiving data from Binance server");
         klines = retreive_test_data(server_time, &market);
+        println!("Data retreived from the server.");
     }
 
 
@@ -101,7 +105,9 @@ fn main() {
 }
 
 fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
-    let mut i = 50;
+    let mut i = 10000;
+    let start_i = i;
+    let mut j = 0;
     let mut start_time = server_time - (i*60*1000*1000);
     let mut end_time = server_time - ((i-1)*60*1000*1000);
 
@@ -118,12 +124,13 @@ fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
         end_time = start_time + 60*1000*1000;
 
         i-=1;
+        j+=1;
         if i%10 == 0 {
-            println!("Retreived {}0 bench of klines data", i/10);
+            println!("Retreived {}/{} bench of klines data", j, start_i);
         }
     };
 
-    let serialized = serde_json::to_string(&klines).unwrap();
+    let serialized = serde_json::to_string_pretty(&klines).unwrap();
     let mut file = File::create("testdata.json").unwrap();
     file.write_all(serialized.as_bytes()).unwrap();
     klines

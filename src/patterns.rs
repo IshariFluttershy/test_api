@@ -15,6 +15,7 @@ pub struct WPattern {
 #[derive(Debug)]
 pub struct MPattern {
     pub start_index: usize,
+    pub start_time: i64,
     pub end_index: usize,
     pub end_time: i64,
     pub higher_price: f64,
@@ -111,54 +112,67 @@ pub fn find_w_pattern(vec: &[MathKLine]) -> Option<WPattern>{
 }
 
 pub fn find_m_pattern(vec: &[MathKLine]) -> Option<MPattern>{
+    let n = 3;
     let start_index: usize;
-    let second_v_index: usize;
+    let second_n_index: usize;
     let end_index: usize;
     let neckline_index: usize;
     let higher_price: f64;
     let neckline_price: f64;
+    let start_time: i64;
     let end_time: i64;
 
+    let is_down_test = vec![TestFunction{function: is_down, params: None}];
+    let is_up_test = vec![TestFunction{function: is_up, params: None}];
+
+
     // Not enough KLines or upward trend
-    if vec.len() < 5 || vec[0].close < vec[0].open || vec[1].close < vec[1].open{
+    if vec.len() < 5 || test_multiple_klines(vec, n, &is_up_test).is_none() {
         return None;
     }
 
-    // Get start of new upward trend
-    start_index = if let Option::Some(result) = vec.iter().position(|elem| elem.close < elem.open) {
-        higher_price = vec[result].high;
-        result
+    start_time = vec[0].open_time;
+
+    // Get start of new downward trend
+    if let Some(result) = test_multiple_klines(&vec[n..], n, &is_down_test) {
+        start_index = result + n;
+        higher_price = vec[start_index].high;
     } else {
         return None;
     };
 
     // Get neckline KLine
-    neckline_index = if let Option::Some(result) = &vec[start_index..].iter().position(|elem| elem.open < elem.close) {
-        neckline_price = vec[*result-1].low;
-        *result + start_index
+    if let Some(result) = test_multiple_klines(&vec[start_index..], n, &is_up_test) {
+        neckline_index = result + start_index;
+        neckline_price = vec[neckline_index].low;
     } else {
         return None;
     };
 
-    // Find the continuation on upward trend + check if lower price breaks
-    second_v_index = if let Some(result) = &vec[neckline_index..].iter().position(|elem| elem.close < elem.open) {
-        if vec[*result].high > higher_price {
-            return None;
-        }
-        *result + neckline_index
+    // Find the continuation on downward trend + check if higher price breaks
+    let second_n_test = vec![
+        TestFunction{function: is_down, params: None},
+        TestFunction{function: is_not_breaking_price_upwards, params: Some(TestParams{price: Some(higher_price)})}
+        ];
+    if let Some(result) = test_multiple_klines(&vec[neckline_index..], n, &second_n_test) {
+        second_n_index = result + neckline_index;
     } else {
         return None;
     };
 
     // Find the KLine that breaks the neckline price
-    end_index = if let Some(result) = &vec[second_v_index..].iter().position(|elem| elem.close < neckline_price) {
-        end_time = vec[*result].close_time;
-        *result + second_v_index
+    let neckline_break_test = vec![
+        TestFunction{function: is_breaking_price_downwards, params: Some(TestParams{price: Some(neckline_price)})}
+        ];
+
+    if let Some(result) = test_multiple_klines(&vec[second_n_index..], n, &neckline_break_test) {
+        end_index = result + second_n_index;
+        end_time = vec[end_index].close_time;
     } else {
         return None;
     };
 
-    Some(MPattern { start_index, end_index, end_time, higher_price, neckline_price })
+    Some(MPattern { start_index, start_time, end_index, end_time, higher_price, neckline_price })
 }
 
 fn test_multiple_klines(vec: &[MathKLine], repetitions: usize, tests: &[TestFunction]) -> Option<usize> {

@@ -56,10 +56,11 @@ impl Backtester {
 
     fn create_trades(&mut self) {
         let mut i = 0;
+        println!("Trade creation process starts. {} klines data to process", self.klines_data.len());
         while i < self.klines_data.len() {
             if let Some(result) = find_w_pattern(&self.klines_data[i..]) {
                 i += result.end_index;
-                println!("result.end_index : {:#?}", i);
+                //println!("result.end_index : {:#?}", i);
                 self.trades.push(Trade{
                     entry_price: result.neckline_price,
                     sl: result.lower_price,
@@ -71,10 +72,13 @@ impl Backtester {
                     status: Status::NotOpened,
                     strategy: Strategy::W
                 });
-                println!("W pattern found : {:#?}", result);
-                println!("New trade added : {:#?}", self.trades.last());
+                //println!("W pattern found : {:#?}", result);
+                //println!("New trade added : {:#?}", self.trades.last());
             } else {
                 i +=1;
+                if i%10 == 0 {
+                    println!("Created {} trades. Processed {} kline data on {}", self.trades.len(), i, self.klines_data.len());
+                }
             }
         }
         /*i = 0;
@@ -92,7 +96,7 @@ impl Backtester {
                     status: Status::NotOpened,
                     strategy: Strategy::M
                 });
-                println!("New trade added : {:#?}", self.trades.last());
+                //println!("New trade added : {:#?}", self.trades.last());
             } else {
                 i +=1;
             }
@@ -101,6 +105,8 @@ impl Backtester {
     }
 
     fn resolve_trades(&mut self) {
+        let mut i = 0;
+        println!("Trade resolution process starts. {} trades and {} klines data to process", self.trades.len(), self.klines_data.len());
         for kline in &self.klines_data {
             self.trades.iter_mut().for_each(|trade| {
                 if kline.close_time == trade.open_time && trade.status == Status::NotOpened {
@@ -121,6 +127,10 @@ impl Backtester {
                     }
                 }
             });
+            i +=1;
+            if i%10000 == 0 {
+                println!("Resolved trades for {} kline data on {}", i, self.klines_data.len());
+            }
         }
         println!("All trades resolved");
     }
