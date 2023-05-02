@@ -74,15 +74,19 @@ fn main() {
 
 
     let mut backtester = Backtester::new(klines, 1);
-    backtester.start();
+    backtester.add_strategy(create_wpattern_trades)
+    .add_strategy(create_mpattern_trades)
+    .start();
+
+    //backtester.start();
     println!("trades not opened == {}", backtester.get_num_status(Status::NotOpened));
     println!("trades NotTriggered == {}", backtester.get_num_status(Status::NotTriggered));
     println!("trades Running == {}", backtester.get_num_status(Status::Running));
     println!("trades closed == {}", backtester.get_num_closed());
 
-    println!("WR stats == {:#?}%", backtester.get_WR_ratio());
-    println!("WR stats for W == {:#?}%", backtester.get_WR_ratio_with_strategy(Strategy::W));
-    println!("WR stats for M == {:#?}%", backtester.get_WR_ratio_with_strategy(Strategy::M));
+    println!("WR stats == {:#?}%", backtester.get_wr_ratio());
+    println!("WR stats for W == {:#?}%", backtester.get_wr_ratio_with_strategy(Strategy::W));
+    println!("WR stats for M == {:#?}%", backtester.get_wr_ratio_with_strategy(Strategy::M));
 
 
 
@@ -102,6 +106,60 @@ fn main() {
         }
         Err(e) => println!("Error: {:?}", e),
     }*/
+}
+
+fn create_wpattern_trades(chunk: Vec<MathKLine>) -> Vec<Trade> {
+    let mut result_vec  = Vec::new();
+    let mut j = 0;
+    while j < chunk.len() {
+        if let Some(result) = find_w_pattern(&chunk[j..]) {
+            j += result.end_index;
+            result_vec.push(Trade{
+                entry_price: result.neckline_price,
+                sl: result.lower_price,
+                tp: result.neckline_price + (result.neckline_price - result.lower_price) * 2.,
+                open_time: result.end_time,
+                opening_kline: chunk[j].clone(),
+                close_time: 0,
+                closing_kline: None,
+                status: Status::NotOpened,
+                strategy: Strategy::W
+            });
+        } else {
+            j += 1;
+        }
+        if result_vec.len()%10 == 0 {
+            println!("Created {} trades. Processed {} kline data on {}", result_vec.len(), j, chunk.len());
+        }
+    }
+    result_vec
+}
+
+fn create_mpattern_trades(chunk: Vec<MathKLine>) -> Vec<Trade> {
+    let mut result_vec  = Vec::new();
+    let mut j = 0;
+    while j < chunk.len() {
+        if let Some(result) = find_m_pattern(&chunk[j..]) {
+            j += result.end_index;
+            result_vec.push(Trade{
+                entry_price: result.neckline_price,
+                sl: result.higher_price,
+                tp: result.neckline_price + (result.neckline_price - result.higher_price) * 2.,
+                open_time: result.end_time,
+                opening_kline: chunk[j].clone(),
+                close_time: 0,
+                closing_kline: None,
+                status: Status::NotOpened,
+                strategy: Strategy::M
+            });
+        } else {
+            j += 1;
+        }
+        if result_vec.len()%10 == 0 {
+            println!("Created {} trades. Processed {} kline data on {}", result_vec.len(), j, chunk.len());
+        }
+    }
+    result_vec
 }
 
 fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {

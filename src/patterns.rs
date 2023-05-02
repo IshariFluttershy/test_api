@@ -1,5 +1,3 @@
-use binance::futures::model::KlineSummary;
-
 static mut KLINE_TIME: i64 = 0;
 
 #[derive(Debug)]
@@ -195,11 +193,11 @@ fn test_multiple_klines(vec: &[MathKLine], repetitions: usize, tests: &[TestFunc
     None
 }
 
-fn is_up(kline: MathKLine, params: Option<TestParams>) -> bool {
+fn is_up(kline: MathKLine, _: Option<TestParams>) -> bool {
     kline.close > kline.open
 }
 
-fn is_down(kline: MathKLine, params: Option<TestParams>) -> bool {
+fn is_down(kline: MathKLine, _: Option<TestParams>) -> bool {
     kline.close < kline.open
 }
 

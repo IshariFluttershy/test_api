@@ -27,22 +27,23 @@ pub enum TradeResult {
 }
 
 #[derive(Clone, Debug)]
-struct Trade {
-    entry_price: f64,
-    sl: f64,
-    tp: f64,
-    status: Status,
-    open_time: i64,
-    close_time: i64,
-    closing_kline: Option<MathKLine>,
-    opening_kline: MathKLine,
-    strategy: Strategy,
+pub struct Trade {
+    pub entry_price: f64,
+    pub sl: f64,
+    pub tp: f64,
+    pub status: Status,
+    pub open_time: i64,
+    pub close_time: i64,
+    pub closing_kline: Option<MathKLine>,
+    pub opening_kline: MathKLine,
+    pub strategy: Strategy,
 }
 
 pub struct Backtester {
     klines_data: Vec<MathKLine>,
     trades: Vec<Trade>,
-    num_workers: usize
+    num_workers: usize,
+    strategies: Vec<fn(Vec<MathKLine>) -> Vec<Trade>>
 }
 
 impl Backtester {
@@ -50,22 +51,25 @@ impl Backtester {
         Backtester {
             klines_data: Self::to_all_math_kline(klines_data),
             trades: Vec::new(),
-            num_workers
+            num_workers,
+            strategies: Vec::new()
         }
     }
 
-    pub fn start(&mut self) {
+    pub fn start(&mut self) -> &mut Self{
         self.create_trades();
         self.resolve_trades();
+        self
     }
 
     fn create_trades(&mut self) {
         println!("Trade creation process starts. {} klines data to process", self.klines_data.len());
-        self.create_trades_from_strategy(Self::create_wpattern_trades);
-        self.create_trades_from_strategy(Self::create_mpattern_trades);
+        for strategy in self.strategies.clone() {
+            self.create_trades_from_strategy(strategy);
+        }
         println!("created {} trades", self.trades.len());
     }
-    
+
     fn create_trades_from_strategy(&mut self, strategy: fn(Vec<MathKLine>) -> Vec<Trade>) {
         let chunk_size = (self.klines_data.len() + self.num_workers - 1) / self.num_workers;
         let results = (0..self.num_workers).map(|i| {
@@ -122,61 +126,17 @@ impl Backtester {
         println!("All trades resolved");
     }
 
-    fn create_wpattern_trades(chunk: Vec<MathKLine>) -> Vec<Trade> {
-        let mut result_vec  = Vec::new();
-        let mut j = 0;
-        while j < chunk.len() {
-            if let Some(result) = find_w_pattern(&chunk[j..]) {
-                j += result.end_index;
-                result_vec.push(Trade{
-                    entry_price: result.neckline_price,
-                    sl: result.lower_price,
-                    tp: result.neckline_price + (result.neckline_price - result.lower_price) * 2.,
-                    open_time: result.end_time,
-                    opening_kline: chunk[j].clone(),
-                    close_time: 0,
-                    closing_kline: None,
-                    status: Status::NotOpened,
-                    strategy: Strategy::W
-                });
-            } else {
-                j += 1;
-            }
-            if result_vec.len()%10 == 0 {
-                println!("Created {} trades. Processed {} kline data on {}", result_vec.len(), j, chunk.len());
-            }
-        }
-        result_vec
+    pub fn add_strategy(&mut self, strategy: fn(Vec<MathKLine>) -> Vec<Trade> ) -> &mut Self {
+        self.strategies.push(strategy);
+        self
     }
 
-    fn create_mpattern_trades(chunk: Vec<MathKLine>) -> Vec<Trade> {
-        let mut result_vec  = Vec::new();
-        let mut j = 0;
-        while j < chunk.len() {
-            if let Some(result) = find_m_pattern(&chunk[j..]) {
-                j += result.end_index;
-                result_vec.push(Trade{
-                    entry_price: result.neckline_price,
-                    sl: result.higher_price,
-                    tp: result.neckline_price + (result.neckline_price - result.higher_price) * 2.,
-                    open_time: result.end_time,
-                    opening_kline: chunk[j].clone(),
-                    close_time: 0,
-                    closing_kline: None,
-                    status: Status::NotOpened,
-                    strategy: Strategy::M
-                });
-            } else {
-                j += 1;
-            }
-            if result_vec.len()%10 == 0 {
-                println!("Created {} trades. Processed {} kline data on {}", result_vec.len(), j, chunk.len());
-            }
-        }
-        result_vec
+    pub fn add_strategies(&mut self, strategies:&mut Vec<fn(Vec<MathKLine>) -> Vec<Trade>> ) -> &mut Self {
+        self.strategies.append(strategies);
+        self
     }
 
-    pub fn get_WR_ratio(&self) -> (f32, f32, f32, usize) {
+    pub fn get_wr_ratio(&self) -> (f32, f32, f32, usize) {
         let total_closed = self.trades.iter().filter(|&trade| matches!(trade.status, Status::Closed{..})).count() as f32;
         let win = self.trades.iter().filter(|&trade| trade.status == Status::Closed(TradeResult::Win)).count() as f32*100./total_closed;
         let loss = self.trades.iter().filter(|&trade| trade.status == Status::Closed(TradeResult::Lost)).count() as f32*100./total_closed;
@@ -184,7 +144,7 @@ impl Backtester {
         (win, loss, unknown, total_closed as usize)
     }
 
-    pub fn get_WR_ratio_with_strategy(&self, strategy: Strategy) -> (f32, f32, f32, usize) {
+    pub fn get_wr_ratio_with_strategy(&self, strategy: Strategy) -> (f32, f32, f32, usize) {
         let total_closed = self.trades.iter().filter(|&trade| matches!(trade.status, Status::Closed{..}) && trade.strategy == strategy).count() as f32;
         let win = self.trades.iter().filter(|&trade| trade.status == Status::Closed(TradeResult::Win) && trade.strategy == strategy).count() as f32*100./total_closed;
         let loss = self.trades.iter().filter(|&trade| trade.status == Status::Closed(TradeResult::Lost) && trade.strategy == strategy).count() as f32*100./total_closed;
