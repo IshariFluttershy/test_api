@@ -73,7 +73,7 @@ fn main() {
 
 
 
-    let mut backtester = Backtester::new(klines);
+    let mut backtester = Backtester::new(klines, 1);
     backtester.start();
     println!("trades not opened == {}", backtester.get_num_status(Status::NotOpened));
     println!("trades NotTriggered == {}", backtester.get_num_status(Status::NotTriggered));
