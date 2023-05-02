@@ -61,53 +61,34 @@ impl Backtester {
 
     fn create_trades(&mut self) {
         println!("Trade creation process starts. {} klines data to process", self.klines_data.len());
-
-        let chunk_size = (self.klines_data.len() + self.num_workers - 1) / self.num_workers;
-        let results = (0..self.num_workers).map(|i| {
-            let start = i * chunk_size;
-            let num_elements = if i < self.num_workers - 1 {
-                chunk_size
-            } else {
-                self.klines_data.len() - i * chunk_size
-            };
-
-            let chunk = Vec::from(&self.klines_data[start..][..num_elements]);
-            let handle = thread::spawn(move || {
-                Self::create_wpattern_trades(chunk)
-            });
-
-            (i, start..start + num_elements, handle)
-        }).collect::<Vec<_>>();
-
-        for (i, range, handle) in results {
-            let mut partial_results = handle.join().unwrap();
-            self.trades.append(&mut partial_results);
-            println!("Thread #{} COMPLETED with range {}..{}", i, range.start, range.end);
-        }
-
-        let chunk_size = (self.klines_data.len() + self.num_workers - 1) / self.num_workers;
-        let results = (0..self.num_workers).map(|i| {
-            let start = i * chunk_size;
-            let num_elements = if i < self.num_workers - 1 {
-                chunk_size
-            } else {
-                self.klines_data.len() - i * chunk_size
-            };
-
-            let chunk = Vec::from(&self.klines_data[start..][..num_elements]);
-            let handle = thread::spawn(move || {
-                Self::create_mpattern_trades(chunk)
-            });
-
-            (i, start..start + num_elements, handle)
-        }).collect::<Vec<_>>();
-
-        for (i, range, handle) in results {
-            let mut partial_results = handle.join().unwrap();
-            self.trades.append(&mut partial_results);
-            println!("Thread #{} COMPLETED with range {}..{}", i, range.start, range.end);
-        }
+        self.create_trades_from_strategy(Self::create_wpattern_trades);
+        self.create_trades_from_strategy(Self::create_mpattern_trades);
         println!("created {} trades", self.trades.len());
+    }
+    
+    fn create_trades_from_strategy(&mut self, strategy: fn(Vec<MathKLine>) -> Vec<Trade>) {
+        let chunk_size = (self.klines_data.len() + self.num_workers - 1) / self.num_workers;
+        let results = (0..self.num_workers).map(|i| {
+            let start = i * chunk_size;
+            let num_elements = if i < self.num_workers - 1 {
+                chunk_size
+            } else {
+                self.klines_data.len() - i * chunk_size
+            };
+
+            let chunk = Vec::from(&self.klines_data[start..][..num_elements]);
+            let handle = thread::spawn(move || {
+                strategy(chunk)
+            });
+
+            (i, start..start + num_elements, handle)
+        }).collect::<Vec<_>>();
+
+        for (i, range, handle) in results {
+            let mut partial_results = handle.join().unwrap();
+            self.trades.append(&mut partial_results);
+            println!("Thread #{} COMPLETED with range {}..{}", i, range.start, range.end);
+        }
     }
 
     fn resolve_trades(&mut self) {
