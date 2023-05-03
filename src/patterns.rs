@@ -45,8 +45,18 @@ struct TestFunction {
     params: Option<TestParams>,
 }
 
-pub fn find_w_pattern(vec: &[MathKLine]) -> Option<WPattern>{
-    let n = 3;
+
+pub struct WPatternParams {
+    klines_repetitions: usize,
+}
+
+
+pub struct MPatternParams {
+    klines_repetitions: usize,
+}
+
+pub fn find_w_pattern(vec: &[MathKLine], options: WPatternParams) -> Option<WPattern>{
+    let n: usize = 3;
     let start_index: usize;
     let second_v_index: usize;
     let end_index: usize;

@@ -60,7 +60,7 @@ fn main() {
     }
 
 
-    let mut klines;
+    let klines;
     if let Ok(content) = fs::read_to_string("testdata.json") {
         println!("data file found, deserializing");
         klines = serde_json::from_str(&content).unwrap();
@@ -78,7 +78,6 @@ fn main() {
     .add_strategy(create_mpattern_trades)
     .start();
 
-    //backtester.start();
     println!("trades not opened == {}", backtester.get_num_status(Status::NotOpened));
     println!("trades NotTriggered == {}", backtester.get_num_status(Status::NotTriggered));
     println!("trades Running == {}", backtester.get_num_status(Status::Running));
@@ -87,8 +86,6 @@ fn main() {
     println!("WR stats == {:#?}%", backtester.get_wr_ratio());
     println!("WR stats for W == {:#?}%", backtester.get_wr_ratio_with_strategy(Strategy::W));
     println!("WR stats for M == {:#?}%", backtester.get_wr_ratio_with_strategy(Strategy::M));
-
-
 
 
 
