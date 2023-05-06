@@ -3,8 +3,8 @@ mod patterns;
 mod strategies;
 
 use crate::backtest::*;
-use crate::strategies::*;
 use crate::patterns::*;
+use crate::strategies::*;
 use binance::account::*;
 use binance::api::*;
 use binance::config::*;
@@ -19,8 +19,13 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::sync::Arc;
 
-const DATA_PATH: &str = "data/testdata.json";
+const DATA_PATH: &str = "data/testdataPart.json";
 
+struct PriceMultiplier {
+    min: f64,
+    max: f64,
+    step: f64,
+}
 
 fn main() {
     let futures_api_key =
@@ -76,38 +81,9 @@ fn main() {
         println!("Data retreived from the server.");
     }
 
-    let mut pattern_params: Vec<Arc<dyn PatternParams>> = Vec::new();
-    pattern_params.push(Arc::new(WPatternParams{
-        klines_repetitions: 3
-    }));
-
-    let mut pattern_params_m: Vec<Arc<dyn PatternParams>> = Vec::new();
-    pattern_params_m.push(Arc::new(MPatternParams{
-        klines_repetitions: 3
-    }));
-
     let mut backtester = Backtester::new(klines, 10);
-    backtester
-        .add_strategy((
-            strategies::create_wpattern_trades,
-            Arc::new(WStrategyParams {
-                tp_multiplier: 2.,
-                sl_multiplier: 1.,
-                name: StrategyName::W
-            }),
-            Arc::new(pattern_params)
-        ))
-        .add_strategy((
-            strategies::create_mpattern_trades,
-            Arc::new(MStrategyParams {
-                tp_multiplier: 2.,
-                sl_multiplier: 1.,
-                name: StrategyName::M
-            }),
-            Arc::new(pattern_params_m)
-        ))
-        .start();
-
+    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.1}, PriceMultiplier{min: 0.5, max: 5., step: 0.1}, 1, 5);
+    backtester.start();
 
     println!(
         "trades not opened == {}",
@@ -149,6 +125,58 @@ fn main() {
     }*/
 }
 
+fn create_w_and_m_pattern_strategies(
+    backtester: &mut Backtester,
+    tp: PriceMultiplier,
+    sl: PriceMultiplier,
+    min_klines_repetitions: usize,
+    max_klines_repetitions: usize,
+) {
+    let mut strategies: Vec<Strategy> = Vec::new();
+    let mut i = tp.min;
+    while i <= tp.max {
+        let mut j = sl.min;
+        while j <= sl.max {
+            for k in (min_klines_repetitions..max_klines_repetitions) {
+                let mut pattern_params_w: Vec<Arc<dyn PatternParams>> = Vec::new();
+                pattern_params_w.push(Arc::new(WPatternParams {
+                    klines_repetitions: k,
+                }));
+
+                let mut pattern_params_m: Vec<Arc<dyn PatternParams>> = Vec::new();
+                pattern_params_m.push(Arc::new(MPatternParams {
+                    klines_repetitions: k,
+                }));
+
+                strategies.push((
+                    strategies::create_wpattern_trades,
+                    Arc::new(WStrategyParams {
+                        tp_multiplier: i,
+                        sl_multiplier: j,
+                        name: StrategyName::W,
+                    }),
+                    Arc::new(pattern_params_w),
+                ));
+
+                strategies.push((
+                    strategies::create_mpattern_trades,
+                    Arc::new(MStrategyParams {
+                        tp_multiplier: i,
+                        sl_multiplier: j,
+                        name: StrategyName::M,
+                    }),
+                    Arc::new(pattern_params_m),
+                ));
+            }
+            j += sl.step;
+        }
+
+        i += tp.step;
+    }
+
+    backtester.add_strategies(&mut strategies);
+}
+
 fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
     let mut i = 10000;
     let start_i = i;
@@ -157,9 +185,7 @@ fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
     let mut end_time = server_time - ((i - 1) * 60 * 1000 * 1000);
 
     let mut klines = Vec::new();
-    while let Ok(retreive_klines) =
-        market.get_klines("BTCUSDT", "1m", 1000, start_time, end_time)
-    {
+    while let Ok(retreive_klines) = market.get_klines("BTCUSDT", "1m", 1000, start_time, end_time) {
         if i <= 0 {
             break;
         }

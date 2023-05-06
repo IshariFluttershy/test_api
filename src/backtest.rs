@@ -5,8 +5,8 @@ use binance::model::KlineSummary;
 use crate::patterns::*;
 use crate::strategies::StrategyParams;
 
-type StrategyFunc = fn(Vec<MathKLine>, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn PatternParams>>>) -> Vec<Trade>;
-type Strategy = (StrategyFunc, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn PatternParams>>>);
+pub type StrategyFunc = fn(Vec<MathKLine>, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn PatternParams>>>) -> Vec<Trade>;
+pub type Strategy = (StrategyFunc, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn PatternParams>>>);
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum StrategyName {
