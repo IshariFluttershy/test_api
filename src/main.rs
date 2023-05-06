@@ -19,6 +19,9 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::sync::Arc;
 
+const DATA_PATH: &str = "data/testdata.json";
+
+
 fn main() {
     let futures_api_key =
         Some("6e2439bdb37395afb6d6a6a7d33c93811c0dc2f4900e0638ff375ba66d63fae8".into());
@@ -63,7 +66,7 @@ fn main() {
     }
 
     let klines;
-    if let Ok(content) = fs::read_to_string("testdata.json") {
+    if let Ok(content) = fs::read_to_string(DATA_PATH) {
         println!("data file found, deserializing");
         klines = serde_json::from_str(&content).unwrap();
         println!("deserializing finished");
@@ -175,7 +178,7 @@ fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
     }
 
     let serialized = serde_json::to_string_pretty(&klines).unwrap();
-    let mut file = File::create("testdata.json").unwrap();
+    let mut file = File::create(DATA_PATH).unwrap();
     file.write_all(serialized.as_bytes()).unwrap();
     klines
 }
