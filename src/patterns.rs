@@ -1,4 +1,13 @@
-static mut KLINE_TIME: i64 = 0;
+use downcast_rs::DowncastSync;
+use downcast_rs::impl_downcast;
+static mut _KLINE_TIME: i64 = 0;
+
+pub trait PatternParams: DowncastSync {}
+impl_downcast!(PatternParams);
+impl PatternParams for WPatternParams {  
+}
+impl PatternParams for MPatternParams {  
+}
 
 #[derive(Debug)]
 pub struct WPattern {
@@ -45,18 +54,18 @@ struct TestFunction {
     params: Option<TestParams>,
 }
 
-
+#[derive(Copy, Clone, Debug)]
 pub struct WPatternParams {
-    klines_repetitions: usize,
+    pub klines_repetitions: usize,
 }
 
-
+#[derive(Copy, Clone, Debug)]
 pub struct MPatternParams {
-    klines_repetitions: usize,
+    pub klines_repetitions: usize,
 }
 
 pub fn find_w_pattern(vec: &[MathKLine], options: WPatternParams) -> Option<WPattern>{
-    let n: usize = 3;
+    let n: usize = options.klines_repetitions;
     let start_index: usize;
     let second_v_index: usize;
     let end_index: usize;
@@ -119,8 +128,8 @@ pub fn find_w_pattern(vec: &[MathKLine], options: WPatternParams) -> Option<WPat
     Some(WPattern { start_index, start_time, end_index, end_time, lower_price, neckline_price })
 }
 
-pub fn find_m_pattern(vec: &[MathKLine]) -> Option<MPattern>{
-    let n = 3;
+pub fn find_m_pattern(vec: &[MathKLine], options: MPatternParams) -> Option<MPattern>{
+    let n = options.klines_repetitions;
     let start_index: usize;
     let second_n_index: usize;
     let end_index: usize;
@@ -227,16 +236,16 @@ fn is_not_breaking_price_downwards(kline: MathKLine, params: Option<TestParams>)
     !(kline.low < params.unwrap().price.unwrap())
 }
 
-pub unsafe fn create_test_kline(open: f64, close: f64) -> MathKLine {
-    KLINE_TIME += 1;
+pub unsafe fn _create_test_kline(open: f64, close: f64) -> MathKLine {
+    _KLINE_TIME += 1;
     MathKLine{
-        open_time: KLINE_TIME,
+        open_time: _KLINE_TIME,
         open: open,
         high: if open > close {open + 0.5} else {close + 0.5},
         low: if open < close {open - 0.5} else {close - 0.5},
         close: close,
         volume: "".to_string(),
-        close_time: KLINE_TIME+1,
+        close_time: _KLINE_TIME+1,
         quote_asset_volume: "".to_string(),
         number_of_trades: 0,
         taker_buy_base_asset_volume: "".to_string(),

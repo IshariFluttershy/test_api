@@ -1,12 +1,15 @@
-use core::time;
+use std::sync::Arc;
 use std::thread;
 
-use binance::model::KlineSummaries;
 use binance::model::KlineSummary;
 use crate::patterns::*;
+use crate::strategies::StrategyParams;
+
+type StrategyFunc = fn(Vec<MathKLine>, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn PatternParams>>>) -> Vec<Trade>;
+type Strategy = (StrategyFunc, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn PatternParams>>>);
 
 #[derive(Clone, Copy, PartialEq, Debug)]
-pub enum Strategy {
+pub enum StrategyName {
     W,
     M
 }
@@ -36,14 +39,14 @@ pub struct Trade {
     pub close_time: i64,
     pub closing_kline: Option<MathKLine>,
     pub opening_kline: MathKLine,
-    pub strategy: Strategy,
+    pub strategy: StrategyName,
 }
 
 pub struct Backtester {
     klines_data: Vec<MathKLine>,
     trades: Vec<Trade>,
     num_workers: usize,
-    strategies: Vec<fn(Vec<MathKLine>) -> Vec<Trade>>
+    strategies: Vec<Strategy>
 }
 
 impl Backtester {
@@ -70,7 +73,7 @@ impl Backtester {
         println!("created {} trades", self.trades.len());
     }
 
-    fn create_trades_from_strategy(&mut self, strategy: fn(Vec<MathKLine>) -> Vec<Trade>) {
+    fn create_trades_from_strategy(&mut self, strategy: Strategy) {
         let chunk_size = (self.klines_data.len() + self.num_workers - 1) / self.num_workers;
         let results = (0..self.num_workers).map(|i| {
             let start = i * chunk_size;
@@ -80,9 +83,12 @@ impl Backtester {
                 self.klines_data.len() - i * chunk_size
             };
 
+            let strategy_params_clone = strategy.1.clone();
+            let patterns_params_clone = strategy.2.clone();
+
             let chunk = Vec::from(&self.klines_data[start..][..num_elements]);
             let handle = thread::spawn(move || {
-                strategy(chunk)
+                strategy.0(chunk, strategy_params_clone, patterns_params_clone)
             });
 
             (i, start..start + num_elements, handle)
@@ -119,19 +125,19 @@ impl Backtester {
                 }
             });
             i +=1;
-            if i%10 == 0 {
+            if i%1000 == 0 {
                 println!("Resolved trades for {} kline data on {}", i, self.klines_data.len());
             }
         }
         println!("All trades resolved");
     }
 
-    pub fn add_strategy(&mut self, strategy: fn(Vec<MathKLine>) -> Vec<Trade> ) -> &mut Self {
+    pub fn add_strategy(&mut self, strategy: Strategy) -> &mut Self {
         self.strategies.push(strategy);
         self
     }
 
-    pub fn add_strategies(&mut self, strategies:&mut Vec<fn(Vec<MathKLine>) -> Vec<Trade>> ) -> &mut Self {
+    pub fn add_strategies(&mut self, strategies:&mut Vec<Strategy> ) -> &mut Self {
         self.strategies.append(strategies);
         self
     }
@@ -144,7 +150,7 @@ impl Backtester {
         (win, loss, unknown, total_closed as usize)
     }
 
-    pub fn get_wr_ratio_with_strategy(&self, strategy: Strategy) -> (f32, f32, f32, usize) {
+    pub fn get_wr_ratio_with_strategy(&self, strategy: StrategyName) -> (f32, f32, f32, usize) {
         let total_closed = self.trades.iter().filter(|&trade| matches!(trade.status, Status::Closed{..}) && trade.strategy == strategy).count() as f32;
         let win = self.trades.iter().filter(|&trade| trade.status == Status::Closed(TradeResult::Win) && trade.strategy == strategy).count() as f32*100./total_closed;
         let loss = self.trades.iter().filter(|&trade| trade.status == Status::Closed(TradeResult::Lost) && trade.strategy == strategy).count() as f32*100./total_closed;
