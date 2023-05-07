@@ -8,6 +8,8 @@ impl PatternParams for WPatternParams {
 }
 impl PatternParams for MPatternParams {  
 }
+impl PatternParams for ReversalPatternParams {  
+}
 
 #[derive(Debug)]
 pub struct WPattern {
@@ -27,6 +29,16 @@ pub struct MPattern {
     pub end_time: i64,
     pub higher_price: f64,
     pub neckline_price: f64
+}
+
+#[derive(Debug)]
+pub struct ReversalPattern {
+    pub start_index: usize,
+    pub start_time: i64,
+    pub end_index: usize,
+    pub end_time: i64,
+    pub peak_price: f64,
+    pub end_price: f64
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -62,6 +74,12 @@ pub struct WPatternParams {
 #[derive(Copy, Clone, Debug)]
 pub struct MPatternParams {
     pub klines_repetitions: usize,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct ReversalPatternParams {
+    pub trend_size: usize,
+    pub counter_trend_size: usize
 }
 
 pub fn find_w_pattern(vec: &[MathKLine], options: WPatternParams) -> Option<WPattern>{
@@ -192,10 +210,39 @@ pub fn find_m_pattern(vec: &[MathKLine], options: MPatternParams) -> Option<MPat
     Some(MPattern { start_index, start_time, end_index, end_time, higher_price, neckline_price })
 }
 
+pub fn find_bull_reversal(vec: &[MathKLine], options: ReversalPatternParams) -> Option<ReversalPattern>{
+    let start_index;
+    let start_time;
+    let end_index;
+    let end_time;
+    let peak_price;
+    let end_price;
+
+    let trend_end_index;
+
+    let is_down_test = vec![TestFunction{function: is_down, params: None}];
+    let is_up_test = vec![TestFunction{function: is_up, params: None}];
+
+    if let Some(result) = test_multiple_klines(&vec[0..], options.trend_size, &is_down_test) {
+        start_index = 0;
+        start_time = vec[0].open_time;
+        trend_end_index = result;
+        peak_price = vec[result].close;
+    } else {
+        return None;
+    }
+    if let Some(result) = test_multiple_klines(&vec[trend_end_index..], options.counter_trend_size, &is_up_test) {
+        end_index = result + trend_end_index;
+        end_time = vec[end_index].close_time;
+        end_price = vec[end_index].close;
+    } else {
+        return None;
+    }
+    Some(ReversalPattern { start_index, start_time, end_index, end_time, peak_price, end_price })
+}
+
 fn test_multiple_klines(vec: &[MathKLine], repetitions: usize, tests: &[TestFunction]) -> Option<usize> {
     let mut success_count = 0;
-
-
 
     for i in 0..vec.len() {
         for test in tests {

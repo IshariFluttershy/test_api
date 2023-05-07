@@ -82,7 +82,8 @@ fn main() {
     }
 
     let mut backtester = Backtester::new(klines, 10);
-    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.1}, PriceMultiplier{min: 0.5, max: 5., step: 0.1}, 1, 5);
+    create_reversal_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.5}, PriceMultiplier{min: 1., max: 1., step: 0.01}, 3, 7, 1, 5);
+    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.1}, PriceMultiplier{min: 0.5, max: 5., step: 0.1}, 1, 5);
     backtester.start();
 
     println!(
@@ -101,12 +102,8 @@ fn main() {
 
     println!("WR stats == {:#?}%", backtester.get_wr_ratio());
     println!(
-        "WR stats for W == {:#?}%",
-        backtester.get_wr_ratio_with_strategy(StrategyName::W)
-    );
-    println!(
-        "WR stats for M == {:#?}%",
-        backtester.get_wr_ratio_with_strategy(StrategyName::M)
+        "WR stats for BullReversal == {:#?}%",
+        backtester.get_wr_ratio_with_strategy(StrategyName::BullReversal)
     );
 
     /*match account.market_buy("BTCUSDT", 0.1) {
@@ -123,6 +120,46 @@ fn main() {
         }
         Err(e) => println!("Error: {:?}", e),
     }*/
+}
+
+fn create_reversal_pattern_strategies(
+    backtester: &mut Backtester,
+    tp: PriceMultiplier,
+    sl: PriceMultiplier,
+    min_trend_size: usize,
+    max_trend_size: usize,
+    min_counter_trend_size: usize,
+    max_counter_trend_size: usize,
+) {
+    let mut strategies: Vec<Strategy> = Vec::new();
+    let mut i = tp.min;
+    while i <= tp.max {
+        let mut j = sl.min;
+        while j <= sl.max {
+            for k in (min_trend_size..max_trend_size) {
+                for l in (min_counter_trend_size..max_counter_trend_size) {
+                    let mut reversal_pattern_params: Vec<Arc<dyn PatternParams>> = Vec::new();
+                    reversal_pattern_params.push(Arc::new(ReversalPatternParams {
+                        trend_size: k,
+                        counter_trend_size: l
+                    }));
+    
+                    strategies.push((
+                        strategies::create_bull_reversal_trades,
+                        Arc::new(ReversalStrategyParams {
+                            tp_multiplier: i,
+                            sl_multiplier: j,
+                            name: StrategyName::BullReversal,
+                        }),
+                        Arc::new(reversal_pattern_params),
+                    ));
+                }
+            }
+            j += sl.step;
+        }
+        i += tp.step;
+    }
+    backtester.add_strategies(&mut strategies);
 }
 
 fn create_w_and_m_pattern_strategies(

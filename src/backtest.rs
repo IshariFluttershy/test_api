@@ -1,5 +1,7 @@
+use std::io::Write;
 use std::sync::Arc;
-use std::thread;
+use std::time::Instant;
+use std::{thread, io};
 
 use binance::model::KlineSummary;
 use crate::patterns::*;
@@ -11,7 +13,8 @@ pub type Strategy = (StrategyFunc, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn Patt
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum StrategyName {
     W,
-    M
+    M,
+    BullReversal
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -67,9 +70,20 @@ impl Backtester {
 
     fn create_trades(&mut self) {
         println!("Trade creation process starts. {} klines data to process", self.klines_data.len());
+        let mut i = 0;
+        let size = self.strategies.len();
+
+        
+        let start = Instant::now();
+        
         for strategy in self.strategies.clone() {
             self.create_trades_from_strategy(strategy);
+            i+=1;
+            let duration = start.elapsed();
+            print!("\rAvancement : {}% -- Elapsed time : {}s -- Estimated total time : {}s", 100*i/size, duration.as_secs(), ((duration.as_secs_f64()/i as f64)*size as f64) as u64);
+            io::stdout().flush().unwrap();
         }
+        println!("");
         println!("created {} trades", self.trades.len());
     }
 
@@ -97,12 +111,13 @@ impl Backtester {
         for (i, range, handle) in results {
             let mut partial_results = handle.join().unwrap();
             self.trades.append(&mut partial_results);
-            println!("Thread #{} COMPLETED with range {}..{}", i, range.start, range.end);
         }
     }
 
     fn resolve_trades(&mut self) {
         let mut i = 0;
+        let size = self.klines_data.len();
+        let start = Instant::now();
         println!("Trade resolution process starts. {} trades and {} klines data to process", self.trades.len(), self.klines_data.len());
         for kline in &self.klines_data {
             self.trades.iter_mut().for_each(|trade| {
@@ -125,9 +140,10 @@ impl Backtester {
                 }
             });
             i +=1;
-            if i%1000 == 0 {
-                println!("Resolved trades for {} kline data on {}", i, self.klines_data.len());
-            }
+            let duration = start.elapsed();
+            print!("\rTrades resolved : {}% -- Elapsed time : {}s -- Estimated total time : {}s", 100*i/size, duration.as_secs(), ((duration.as_secs_f64()/i as f64)*size as f64) as u64);
+            io::stdout().flush().unwrap();
+            //println!("Resolved trades for {} kline data on {}", i, self.klines_data.len());
         }
         println!("All trades resolved");
     }
