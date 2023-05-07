@@ -86,7 +86,16 @@ fn main() {
     //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.1}, PriceMultiplier{min: 0.5, max: 5., step: 0.1}, 1, 5);
     backtester.start();
 
-    println!(
+    let results = backtester.get_results();
+
+    for result in results {
+        if result.win_ratio > 50. {
+            println!("{:#?}", result);
+        }
+    }
+
+
+    /*println!(
         "trades not opened == {}",
         backtester.get_num_status(Status::NotOpened)
     );
@@ -104,7 +113,7 @@ fn main() {
     println!(
         "WR stats for BullReversal == {:#?}%",
         backtester.get_wr_ratio_with_strategy(StrategyName::BullReversal)
-    );
+    );*/
 
     /*match account.market_buy("BTCUSDT", 0.1) {
         Ok(answer) => {
@@ -136,12 +145,13 @@ fn create_reversal_pattern_strategies(
     while i <= tp.max {
         let mut j = sl.min;
         while j <= sl.max {
-            for k in (min_trend_size..max_trend_size) {
-                for l in (min_counter_trend_size..max_counter_trend_size) {
+            for k in min_trend_size..max_trend_size {
+                for l in min_counter_trend_size..max_counter_trend_size {
                     let mut reversal_pattern_params: Vec<Arc<dyn PatternParams>> = Vec::new();
                     reversal_pattern_params.push(Arc::new(ReversalPatternParams {
                         trend_size: k,
-                        counter_trend_size: l
+                        counter_trend_size: l,
+                        name: PatternName::BullReversal
                     }));
     
                     strategies.push((
@@ -174,15 +184,17 @@ fn create_w_and_m_pattern_strategies(
     while i <= tp.max {
         let mut j = sl.min;
         while j <= sl.max {
-            for k in (min_klines_repetitions..max_klines_repetitions) {
+            for k in min_klines_repetitions..max_klines_repetitions {
                 let mut pattern_params_w: Vec<Arc<dyn PatternParams>> = Vec::new();
                 pattern_params_w.push(Arc::new(WPatternParams {
                     klines_repetitions: k,
+                    name: PatternName::W
                 }));
 
                 let mut pattern_params_m: Vec<Arc<dyn PatternParams>> = Vec::new();
                 pattern_params_m.push(Arc::new(MPatternParams {
                     klines_repetitions: k,
+                    name: PatternName::M
                 }));
 
                 strategies.push((

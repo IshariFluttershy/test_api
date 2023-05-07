@@ -1,14 +1,55 @@
+use std::collections::HashMap;
+use std::fmt;
+
 use downcast_rs::DowncastSync;
 use downcast_rs::impl_downcast;
 static mut _KLINE_TIME: i64 = 0;
 
-pub trait PatternParams: DowncastSync {}
+pub trait PatternParams: DowncastSync { fn get_params(&self) -> HashMap<String, String>; }
 impl_downcast!(PatternParams);
 impl PatternParams for WPatternParams {  
+    fn get_params(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        map.insert(String::from("klines_repetitions"), self.klines_repetitions.to_string());
+        map.insert(String::from("name"), self.name.to_string());
+        map
+    }
 }
 impl PatternParams for MPatternParams {  
+    fn get_params(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        map.insert(String::from("klines_repetitions"), self.klines_repetitions.to_string());
+        map.insert(String::from("name"), self.name.to_string());
+        map
+    }
 }
 impl PatternParams for ReversalPatternParams {  
+    fn get_params(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        map.insert(String::from("trend_size"), self.trend_size.to_string());
+        map.insert(String::from("counter_trend_size"), self.counter_trend_size.to_string());
+        map.insert(String::from("name"), self.name.to_string());
+        map
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum PatternName {
+    None,
+    W,
+    M,
+    BullReversal
+}
+
+impl fmt::Display for PatternName {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            PatternName::None => write!(f, "None"),
+            PatternName::W => write!(f, "W"),
+            PatternName::M => write!(f, "M"),
+            PatternName::BullReversal => write!(f, "Bull Reversal"),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -69,17 +110,20 @@ struct TestFunction {
 #[derive(Copy, Clone, Debug)]
 pub struct WPatternParams {
     pub klines_repetitions: usize,
+    pub name: PatternName
 }
 
 #[derive(Copy, Clone, Debug)]
 pub struct MPatternParams {
     pub klines_repetitions: usize,
+    pub name: PatternName
 }
 
 #[derive(Copy, Clone, Debug)]
 pub struct ReversalPatternParams {
     pub trend_size: usize,
-    pub counter_trend_size: usize
+    pub counter_trend_size: usize,
+    pub name: PatternName
 }
 
 pub fn find_w_pattern(vec: &[MathKLine], options: WPatternParams) -> Option<WPattern>{

@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::collections::HashMap;
 
 use downcast_rs::impl_downcast;
 use downcast_rs::DowncastSync;
@@ -6,11 +7,35 @@ use downcast_rs::DowncastSync;
 use crate::backtest::*;
 use crate::patterns::*;
 
-pub trait StrategyParams: DowncastSync {}
+pub trait StrategyParams: DowncastSync { fn get_params(&self) -> HashMap<String, String>; }
 impl_downcast!(StrategyParams);
-impl StrategyParams for WStrategyParams {}
-impl StrategyParams for MStrategyParams {}
-impl StrategyParams for ReversalStrategyParams {}
+impl StrategyParams for WStrategyParams {
+    fn get_params(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        map.insert(String::from("tp_multiplier"), self.tp_multiplier.to_string());
+        map.insert(String::from("sl_multiplier"), self.sl_multiplier.to_string());
+        map.insert(String::from("name_multiplier"), self.name.to_string());
+        map
+    }
+}
+impl StrategyParams for MStrategyParams {
+    fn get_params(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        map.insert(String::from("tp_multiplier"), self.tp_multiplier.to_string());
+        map.insert(String::from("sl_multiplier"), self.sl_multiplier.to_string());
+        map.insert(String::from("name_multiplier"), self.name.to_string());
+        map
+    }
+}
+impl StrategyParams for ReversalStrategyParams {
+    fn get_params(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        map.insert(String::from("tp_multiplier"), self.tp_multiplier.to_string());
+        map.insert(String::from("sl_multiplier"), self.sl_multiplier.to_string());
+        map.insert(String::from("name_multiplier"), self.name.to_string());
+        map
+    }
+}
 
 #[derive(Copy, Clone, Debug)]
 pub struct WStrategyParams {
