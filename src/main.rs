@@ -89,7 +89,9 @@ fn main() {
     let results = backtester.get_results();
 
     for result in results {
-        if result.win_ratio > 50. {
+        let rr_ratio = (100. * result.strategy_params.sl_multiplier) / (100. * result.strategy_params.tp_multiplier);
+        if result.win_ratio > 100.*rr_ratio as f32{
+            println!("rr ratio: {} -- with sl mul: {} -- with tp mul: {}", rr_ratio, result.strategy_params.sl_multiplier, result.strategy_params.tp_multiplier);
             println!("{:#?}", result);
         }
     }
@@ -156,11 +158,11 @@ fn create_reversal_pattern_strategies(
     
                     strategies.push((
                         strategies::create_bull_reversal_trades,
-                        Arc::new(ReversalStrategyParams {
+                        StrategyParams {
                             tp_multiplier: i,
                             sl_multiplier: j,
                             name: StrategyName::BullReversal,
-                        }),
+                        },
                         Arc::new(reversal_pattern_params),
                     ));
                 }
@@ -199,21 +201,21 @@ fn create_w_and_m_pattern_strategies(
 
                 strategies.push((
                     strategies::create_wpattern_trades,
-                    Arc::new(WStrategyParams {
+                    StrategyParams {
                         tp_multiplier: i,
                         sl_multiplier: j,
                         name: StrategyName::W,
-                    }),
+                    },
                     Arc::new(pattern_params_w),
                 ));
 
                 strategies.push((
                     strategies::create_mpattern_trades,
-                    Arc::new(MStrategyParams {
+                    StrategyParams {
                         tp_multiplier: i,
                         sl_multiplier: j,
                         name: StrategyName::M,
-                    }),
+                    },
                     Arc::new(pattern_params_m),
                 ));
             }

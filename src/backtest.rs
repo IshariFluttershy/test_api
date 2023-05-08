@@ -8,8 +8,8 @@ use binance::model::KlineSummary;
 use crate::patterns::*;
 use crate::strategies::*;
 
-pub type StrategyFunc = fn(Vec<MathKLine>, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn PatternParams>>>) -> Vec<Trade>;
-pub type Strategy = (StrategyFunc, Arc<dyn StrategyParams>, Arc<Vec<Arc<dyn PatternParams>>>);
+pub type StrategyFunc = fn(Vec<MathKLine>, StrategyParams, Arc<Vec<Arc<dyn PatternParams>>>) -> Vec<Trade>;
+pub type Strategy = (StrategyFunc, StrategyParams, Arc<Vec<Arc<dyn PatternParams>>>);
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum StrategyName {
@@ -61,7 +61,7 @@ pub struct Trade {
 #[derive(Debug)]
 pub struct StrategyResult{
     pub name: StrategyName,
-    pub strategy_params: HashMap<String, String>,
+    pub strategy_params: StrategyParams,
     pub patterns_params: HashMap<String, String>,
     pub win_ratio: f32,
     pub lose_ratio: f32,
@@ -92,6 +92,7 @@ impl Backtester {
     }
 
     pub fn start(&mut self) -> &mut Self{
+        let mut i = 0;
         let size = self.strategies.len();
         let start = Instant::now();
 
@@ -100,6 +101,11 @@ impl Backtester {
             self.resolve_trades();
             self.generate_results(strategy);
             self.clean_trades();
+
+            i += 1;
+            let duration = start.elapsed();
+            print!("\rTrades resolved : {}% -- Elapsed time : {}s -- Estimated total time : {}s", 100*i/size, duration.as_secs(), ((duration.as_secs_f64()/i as f64)*size as f64) as u64);
+            io::stdout().flush().unwrap();
         }
         self
     }
@@ -185,17 +191,7 @@ impl Backtester {
 
     fn generate_results(&mut self, strategy: Strategy) {
         let name;
-
-        if let Some(strategy_params) = strategy.1.downcast_ref::<WStrategyParams>() {
-            name = strategy_params.name;
-        } else if let Some(strategy_params) = strategy.1.downcast_ref::<MStrategyParams>() {
-            name = strategy_params.name;
-        } else if let Some(strategy_params) = strategy.1.downcast_ref::<ReversalStrategyParams>() {
-            name = strategy_params.name;
-        } else {
-            name = StrategyName::None;
-        }
-
+        name = strategy.1.name;
         let mut patterns_params = HashMap::new();
 
         for params in strategy.2.as_ref() {
@@ -215,7 +211,7 @@ impl Backtester {
 
         self.results.push(StrategyResult { 
             name: name,
-            strategy_params: strategy.1.get_params(),
+            strategy_params: strategy.1,
             patterns_params: patterns_params,
             win_ratio: win_ratio,
             lose_ratio: lose_ratio,
