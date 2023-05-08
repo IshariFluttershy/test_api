@@ -20,6 +20,8 @@ use std::io::prelude::*;
 use std::sync::Arc;
 
 const DATA_PATH: &str = "data/testdataPart.json";
+const RESULTS_PATH: &str = "results/results.json";
+
 
 struct PriceMultiplier {
     min: f64,
@@ -81,21 +83,25 @@ fn main() {
         println!("Data retreived from the server.");
     }
 
-    let mut backtester = Backtester::new(klines, 10);
-    create_reversal_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.5}, PriceMultiplier{min: 1., max: 1., step: 0.01}, 3, 7, 1, 5);
-    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.1}, PriceMultiplier{min: 0.5, max: 5., step: 0.1}, 1, 5);
+    let mut backtester = Backtester::new(klines, 1);
+    //create_reversal_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.5}, PriceMultiplier{min: 1., max: 1., step: 0.01}, 3, 7, 1, 5);
+    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 4., step: 0.5}, PriceMultiplier{min: 0.9, max: 1., step: 0.05}, 1, 5, 7, 25);
+    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 1., max: 1., step: 1.}, PriceMultiplier{min: 1., max: 1., step: 1.}, 3, 4, 15, 15);
     backtester.start();
+    println!("");
 
     let results = backtester.get_results();
 
     for result in results {
-        let rr_ratio = (100. * result.strategy_params.sl_multiplier) / (100. * result.strategy_params.tp_multiplier);
-        if result.win_ratio > 100.*rr_ratio as f32{
-            println!("rr ratio: {} -- with sl mul: {} -- with tp mul: {}", rr_ratio, result.strategy_params.sl_multiplier, result.strategy_params.tp_multiplier);
+        //if result.win_ratio > 100.*rr_ratio as f32{
+            println!("rr ratio: {} -- with sl mul: {} -- with tp mul: {}", result.rr_ratio, result.strategy_params.sl_multiplier, result.strategy_params.tp_multiplier);
             println!("{:#?}", result);
-        }
+        //}
     }
 
+    let results_json = serde_json::to_string_pretty(results).unwrap();
+    let mut file = File::create(RESULTS_PATH).unwrap();
+    file.write_all(results_json.as_bytes()).unwrap();
 
     /*println!(
         "trades not opened == {}",
@@ -147,8 +153,8 @@ fn create_reversal_pattern_strategies(
     while i <= tp.max {
         let mut j = sl.min;
         while j <= sl.max {
-            for k in min_trend_size..max_trend_size {
-                for l in min_counter_trend_size..max_counter_trend_size {
+            for k in min_trend_size..=max_trend_size {
+                for l in min_counter_trend_size..=max_counter_trend_size {
                     let mut reversal_pattern_params: Vec<Arc<dyn PatternParams>> = Vec::new();
                     reversal_pattern_params.push(Arc::new(ReversalPatternParams {
                         trend_size: k,
@@ -180,44 +186,50 @@ fn create_w_and_m_pattern_strategies(
     sl: PriceMultiplier,
     min_klines_repetitions: usize,
     max_klines_repetitions: usize,
+    min_klines_range: usize,
+    max_klines_range: usize,
 ) {
     let mut strategies: Vec<Strategy> = Vec::new();
     let mut i = tp.min;
     while i <= tp.max {
         let mut j = sl.min;
         while j <= sl.max {
-            for k in min_klines_repetitions..max_klines_repetitions {
-                let mut pattern_params_w: Vec<Arc<dyn PatternParams>> = Vec::new();
-                pattern_params_w.push(Arc::new(WPatternParams {
-                    klines_repetitions: k,
-                    name: PatternName::W
-                }));
-
-                let mut pattern_params_m: Vec<Arc<dyn PatternParams>> = Vec::new();
-                pattern_params_m.push(Arc::new(MPatternParams {
-                    klines_repetitions: k,
-                    name: PatternName::M
-                }));
-
-                strategies.push((
-                    strategies::create_wpattern_trades,
-                    StrategyParams {
-                        tp_multiplier: i,
-                        sl_multiplier: j,
-                        name: StrategyName::W,
-                    },
-                    Arc::new(pattern_params_w),
-                ));
-
-                strategies.push((
-                    strategies::create_mpattern_trades,
-                    StrategyParams {
-                        tp_multiplier: i,
-                        sl_multiplier: j,
-                        name: StrategyName::M,
-                    },
-                    Arc::new(pattern_params_m),
-                ));
+            for k in min_klines_repetitions..=max_klines_repetitions {
+                for l in min_klines_range..=max_klines_range {
+                    let mut pattern_params_w: Vec<Arc<dyn PatternParams>> = Vec::new();
+                    pattern_params_w.push(Arc::new(WPatternParams {
+                        klines_repetitions: k,
+                        klines_range: l,
+                        name: PatternName::W
+                    }));
+    
+                    let mut pattern_params_m: Vec<Arc<dyn PatternParams>> = Vec::new();
+                    pattern_params_m.push(Arc::new(MPatternParams {
+                        klines_repetitions: k,
+                        klines_range: l,
+                        name: PatternName::M
+                    }));
+    
+                    strategies.push((
+                        strategies::create_wpattern_trades,
+                        StrategyParams {
+                            tp_multiplier: i,
+                            sl_multiplier: j,
+                            name: StrategyName::W,
+                        },
+                        Arc::new(pattern_params_w),
+                    ));
+    
+                    strategies.push((
+                        strategies::create_mpattern_trades,
+                        StrategyParams {
+                            tp_multiplier: i,
+                            sl_multiplier: j,
+                            name: StrategyName::M,
+                        },
+                        Arc::new(pattern_params_m),
+                    ));
+                }
             }
             j += sl.step;
         }

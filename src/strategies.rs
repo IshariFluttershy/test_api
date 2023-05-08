@@ -1,10 +1,13 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::backtest::*;
 use crate::patterns::*;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct StrategyParams {
     pub tp_multiplier: f64,
     pub sl_multiplier: f64,

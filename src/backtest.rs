@@ -5,13 +5,14 @@ use std::time::Instant;
 use std::{thread, io, fmt};
 
 use binance::model::KlineSummary;
+use serde::{Serialize, Deserialize};
 use crate::patterns::*;
 use crate::strategies::*;
 
 pub type StrategyFunc = fn(Vec<MathKLine>, StrategyParams, Arc<Vec<Arc<dyn PatternParams>>>) -> Vec<Trade>;
 pub type Strategy = (StrategyFunc, StrategyParams, Arc<Vec<Arc<dyn PatternParams>>>);
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub enum StrategyName {
     None,
     W,
@@ -58,7 +59,7 @@ pub struct Trade {
     pub strategy: StrategyName,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct StrategyResult{
     pub name: StrategyName,
     pub strategy_params: StrategyParams,
@@ -70,6 +71,8 @@ pub struct StrategyResult{
     pub total_lose: usize,
     pub total_closed: usize,
     pub total_unclosed: usize,
+    pub rr_ratio: f32,
+    pub efficiency: f32
 }
 
 pub struct Backtester {
@@ -208,6 +211,7 @@ impl Backtester {
         let win_ratio = total_win as f32*100./total_closed as f32;
         let lose_ratio = total_lose as f32*100./total_closed as f32;
         let unknown_ratio = total_unknown as f32*100./total_closed as f32;
+        let rr_ratio = ((100. * strategy.1.sl_multiplier) / (100. * strategy.1.tp_multiplier)) as f32;
 
         self.results.push(StrategyResult { 
             name: name,
@@ -220,6 +224,8 @@ impl Backtester {
             total_lose: total_lose,
             total_closed: total_closed as usize,
             total_unclosed: total_unclosed,
+            rr_ratio: rr_ratio,
+            efficiency: win_ratio * rr_ratio * 0.01
          });
     }
 
