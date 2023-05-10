@@ -85,8 +85,8 @@ fn main() {
 
     let mut backtester = Backtester::new(klines, 1);
     //create_reversal_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.5}, PriceMultiplier{min: 1., max: 1., step: 0.01}, 3, 7, 1, 5);
-    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 4., step: 0.5}, PriceMultiplier{min: 0.9, max: 1., step: 0.05}, 1, 5, 7, 25);
-    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 1., max: 1., step: 1.}, PriceMultiplier{min: 1., max: 1., step: 1.}, 3, 4, 15, 15);
+    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 4., step: 0.5}, PriceMultiplier{min: 0.9, max: 1., step: 0.05}, 1, 5, 7, 25);
+    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 1., max: 3., step: 1.}, PriceMultiplier{min: 1., max: 1., step: 0.5}, 3, 4, 15, 15);
     backtester.start();
     println!("");
 

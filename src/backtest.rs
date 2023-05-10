@@ -212,6 +212,8 @@ impl Backtester {
         let lose_ratio = total_lose as f32*100./total_closed as f32;
         let unknown_ratio = total_unknown as f32*100./total_closed as f32;
         let rr_ratio = ((100. * strategy.1.sl_multiplier) / (100. * strategy.1.tp_multiplier)) as f32;
+        let needed_win_percentage = (strategy.1.sl_multiplier/(1.+strategy.1.tp_multiplier) * 100.) as f32;
+        let efficiency = win_ratio/needed_win_percentage;
 
         self.results.push(StrategyResult { 
             name: name,
@@ -224,8 +226,8 @@ impl Backtester {
             total_lose: total_lose,
             total_closed: total_closed as usize,
             total_unclosed: total_unclosed,
-            rr_ratio: rr_ratio,
-            efficiency: win_ratio * rr_ratio * 0.01
+            rr_ratio: needed_win_percentage*0.01,
+            efficiency: efficiency
          });
     }
 
