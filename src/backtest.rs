@@ -72,6 +72,7 @@ pub struct StrategyResult{
     pub total_closed: usize,
     pub total_unclosed: usize,
     pub rr_ratio: f32,
+    pub rr_lisible: String,
     pub efficiency: f32
 }
 
@@ -212,9 +213,9 @@ impl Backtester {
         let lose_ratio = total_lose as f32*100./total_closed as f32;
         let unknown_ratio = total_unknown as f32*100./total_closed as f32;
         let rr_ratio = ((100. * strategy.1.sl_multiplier) / (100. * strategy.1.tp_multiplier)) as f32;
-        let needed_win_percentage = (strategy.1.sl_multiplier/(1.+strategy.1.tp_multiplier) * 100.) as f32;
+        let needed_win_percentage = (1./(1.+(strategy.1.tp_multiplier/strategy.1.sl_multiplier))*100.) as f32;
         let efficiency = win_ratio/needed_win_percentage;
-
+        
         self.results.push(StrategyResult { 
             name: name,
             strategy_params: strategy.1,
@@ -227,6 +228,7 @@ impl Backtester {
             total_closed: total_closed as usize,
             total_unclosed: total_unclosed,
             rr_ratio: needed_win_percentage*0.01,
+            rr_lisible: String::from(format!("{}:{}", strategy.1.tp_multiplier * (1./strategy.1.sl_multiplier), strategy.1.sl_multiplier * (1./strategy.1.sl_multiplier))),
             efficiency: efficiency
          });
     }
