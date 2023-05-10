@@ -11,6 +11,7 @@ impl PatternParams for WPatternParams {
     fn get_params(&self) -> HashMap<String, String> {
         let mut map = HashMap::new();
         map.insert(String::from("klines_repetitions"), self.klines_repetitions.to_string());
+        map.insert(String::from("klines_range"), self.klines_range.to_string());
         map.insert(String::from("name"), self.name.to_string());
         map
     }
@@ -19,6 +20,7 @@ impl PatternParams for MPatternParams {
     fn get_params(&self) -> HashMap<String, String> {
         let mut map = HashMap::new();
         map.insert(String::from("klines_repetitions"), self.klines_repetitions.to_string());
+        map.insert(String::from("klines_range"), self.klines_range.to_string());
         map.insert(String::from("name"), self.name.to_string());
         map
     }

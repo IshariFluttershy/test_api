@@ -20,7 +20,8 @@ use std::io::prelude::*;
 use std::sync::Arc;
 
 const DATA_PATH: &str = "data/testdataPart.json";
-const RESULTS_PATH: &str = "results/results.json";
+const RESULTS_PATH: &str = "results/full/results.json";
+const AFFINED_RESULTS_PATH: &str = "results/affined/results.json";
 
 
 struct PriceMultiplier {
@@ -46,10 +47,10 @@ fn main() {
     let market: Market = Binance::new(None, None);
     let general: FuturesGeneral = Binance::new(None, None);
 
-    match account.account_balance() {
+    /*match account.account_balance() {
         Ok(answer) => println!("{:#?}", answer),
         Err(e) => println!("Error: {:?}", e),
-    }
+    }*/
 
     /*let price: Option<f64> = match market.get_price("BNBUSDT") {
         Ok(answer) => {
@@ -83,25 +84,30 @@ fn main() {
         println!("Data retreived from the server.");
     }
 
-    let mut backtester = Backtester::new(klines, 1);
+    let mut backtester = Backtester::new(klines, 10);
     //create_reversal_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.5}, PriceMultiplier{min: 1., max: 1., step: 0.01}, 3, 7, 1, 5);
-    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 4., step: 0.5}, PriceMultiplier{min: 0.9, max: 1., step: 0.05}, 1, 5, 7, 25);
-    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 2., step: 0.5}, PriceMultiplier{min: 0.5, max: 2., step: 0.5}, 3, 3, 15, 15);
+    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 1., step: 0.5}, PriceMultiplier{min: 0.9, max: 1., step: 0.05}, 3, 3, 15, 15);
+    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 1., max: 4., step: 1.}, PriceMultiplier{min: 0.5, max: 2., step: 0.5}, 2, 5, 10, 20);
     backtester.start();
     println!("");
 
     let results = backtester.get_results();
+    let affined_results: Vec<StrategyResult> = results.iter().filter(|x| x.total_closed > 100).cloned().collect();
 
-    for result in results {
+    /*for result in results {
         //if result.win_ratio > 100.*rr_ratio as f32{
             println!("rr ratio: {} -- with sl mul: {} -- with tp mul: {}", result.rr_ratio, result.strategy_params.sl_multiplier, result.strategy_params.tp_multiplier);
             println!("{:#?}", result);
         //}
-    }
+    }*/
 
     let results_json = serde_json::to_string_pretty(results).unwrap();
     let mut file = File::create(RESULTS_PATH).unwrap();
     file.write_all(results_json.as_bytes()).unwrap();
+
+    let affined_results_json = serde_json::to_string_pretty(&affined_results).unwrap();
+    let mut file = File::create(AFFINED_RESULTS_PATH).unwrap();
+    file.write_all(affined_results_json.as_bytes()).unwrap();
 
     /*println!(
         "trades not opened == {}",

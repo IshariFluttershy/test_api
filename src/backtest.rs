@@ -59,7 +59,7 @@ pub struct Trade {
     pub strategy: StrategyName,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct StrategyResult{
     pub name: StrategyName,
     pub strategy_params: StrategyParams,
@@ -209,13 +209,14 @@ impl Backtester {
         let total_unclosed = self.trades.len() - total_closed;
 
 
-        let win_ratio = total_win as f32*100./total_closed as f32;
-        let lose_ratio = total_lose as f32*100./total_closed as f32;
-        let unknown_ratio = total_unknown as f32*100./total_closed as f32;
-        let rr_ratio = ((100. * strategy.1.sl_multiplier) / (100. * strategy.1.tp_multiplier)) as f32;
-        let needed_win_percentage = (1./(1.+(strategy.1.tp_multiplier/strategy.1.sl_multiplier))*100.) as f32;
-        let efficiency = win_ratio/needed_win_percentage;
+        let win_ratio = ((total_win as f32*100./total_closed as f32 * 100.0).round() / 100.0) as f32;
+        let lose_ratio = ((total_lose as f32*100./total_closed as f32 * 100.0).round() / 100.0) as f32;
+        let unknown_ratio = ((total_unknown as f32*100./total_closed as f32 * 100.0).round() / 100.0) as f32;
+        let needed_win_percentage = (((1./(1.+(strategy.1.tp_multiplier/strategy.1.sl_multiplier))*100.) * 100.0).round() / 100.0) as f32;
+        let efficiency = (win_ratio/needed_win_percentage * 100.0).round() / 100.0;
         
+        //(x * 100.0).round() / 100.0
+
         self.results.push(StrategyResult { 
             name: name,
             strategy_params: strategy.1,
@@ -227,8 +228,8 @@ impl Backtester {
             total_lose: total_lose,
             total_closed: total_closed as usize,
             total_unclosed: total_unclosed,
-            rr_ratio: needed_win_percentage*0.01,
-            rr_lisible: String::from(format!("{}:{}", strategy.1.tp_multiplier * (1./strategy.1.sl_multiplier), strategy.1.sl_multiplier * (1./strategy.1.sl_multiplier))),
+            rr_ratio: (needed_win_percentage*0.01* 100.0).round() / 100.0,
+            rr_lisible: String::from(format!("{}:{}", (strategy.1.tp_multiplier * (1./strategy.1.sl_multiplier) * 100.0).round() / 100.0, strategy.1.sl_multiplier * (1./strategy.1.sl_multiplier))),
             efficiency: efficiency
          });
     }
