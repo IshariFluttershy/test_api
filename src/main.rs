@@ -84,12 +84,12 @@ fn main() {
         println!("Data retreived from the server.");
     }
 
-    let mut backtester = Backtester::new(klines, 10);
+    let mut backtester = Backtester::new(klines, 64); 
     //create_reversal_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.5}, PriceMultiplier{min: 1., max: 1., step: 0.01}, 3, 7, 1, 5);
-    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 1., step: 0.5}, PriceMultiplier{min: 0.9, max: 1., step: 0.05}, 3, 3, 15, 15);
-    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 1., max: 4., step: 1.}, PriceMultiplier{min: 0.5, max: 2., step: 0.5}, 2, 5, 10, 20);
+    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 2., step: 0.5}, PriceMultiplier{min: 0.5, max: 2., step: 0.5}, 1, 5, 15, 15);
+    create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 1., max: 4., step: 1.}, PriceMultiplier{min: 0.5, max: 2., step: 0.5}, 1, 7, 10, 20);
     backtester.start();
-    println!("");
+    println!();
 
     let results = backtester.get_results();
     let affined_results: Vec<StrategyResult> = results.iter().filter(|x| x.total_closed > 100).cloned().collect();
@@ -161,12 +161,11 @@ fn create_reversal_pattern_strategies(
         while j <= sl.max {
             for k in min_trend_size..=max_trend_size {
                 for l in min_counter_trend_size..=max_counter_trend_size {
-                    let mut reversal_pattern_params: Vec<Arc<dyn PatternParams>> = Vec::new();
-                    reversal_pattern_params.push(Arc::new(ReversalPatternParams {
+                    let reversal_pattern_params: Vec<Arc<dyn PatternParams>> = vec![Arc::new(ReversalPatternParams {
                         trend_size: k,
                         counter_trend_size: l,
                         name: PatternName::BullReversal
-                    }));
+                    })];
     
                     strategies.push((
                         strategies::create_bull_reversal_trades,
@@ -202,19 +201,19 @@ fn create_w_and_m_pattern_strategies(
         while j <= sl.max {
             for k in min_klines_repetitions..=max_klines_repetitions {
                 for l in min_klines_range..=max_klines_range {
-                    let mut pattern_params_w: Vec<Arc<dyn PatternParams>> = Vec::new();
-                    pattern_params_w.push(Arc::new(WPatternParams {
+                    let pattern_params_w: Vec<Arc<dyn PatternParams>> = vec![
+                    Arc::new(WPatternParams {
                         klines_repetitions: k,
                         klines_range: l,
                         name: PatternName::W
-                    }));
+                    })];
     
-                    let mut pattern_params_m: Vec<Arc<dyn PatternParams>> = Vec::new();
-                    pattern_params_m.push(Arc::new(MPatternParams {
+                    let pattern_params_m: Vec<Arc<dyn PatternParams>> = vec![
+                    Arc::new(MPatternParams {
                         klines_repetitions: k,
                         klines_range: l,
                         name: PatternName::M
-                    }));
+                    })];
     
                     strategies.push((
                         strategies::create_wpattern_trades,
@@ -247,7 +246,7 @@ fn create_w_and_m_pattern_strategies(
 }
 
 fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
-    let mut i = 10000;
+    let mut i: u64 = 10000;
     let start_i = i;
     let mut j = 0;
     let mut start_time = server_time - (i * 60 * 1000 * 1000);
@@ -255,7 +254,7 @@ fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
 
     let mut klines = Vec::new();
     while let Ok(retreive_klines) = market.get_klines("BTCUSDT", "1m", 1000, start_time, end_time) {
-        if i <= 0 {
+        if i == 0 {
             break;
         }
         if let KlineSummaries::AllKlineSummaries(mut retreived_vec) = retreive_klines {
@@ -281,14 +280,14 @@ fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
 fn _tp_market_close(symbol: &str, stop_price: f64, side: OrderSide) -> CustomOrderRequest {
     CustomOrderRequest {
         symbol: symbol.into(),
-        side: side,
+        side,
         position_side: None,
         order_type: account::OrderType::TakeProfitMarket,
         time_in_force: None,
         qty: None,
         reduce_only: None,
         price: None,
-        stop_price: Some(stop_price.into()),
+        stop_price: Some(stop_price),
         close_position: Some(true),
         activation_price: None,
         callback_rate: None,

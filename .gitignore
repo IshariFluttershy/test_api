@@ -1,5 +1,6 @@
 /target
 /results
+/.vs
 /data
 
 api_key.txt

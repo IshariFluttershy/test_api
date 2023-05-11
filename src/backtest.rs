@@ -129,7 +129,7 @@ impl Backtester {
             print!("\rAvancement : {}% -- Elapsed time : {}s -- Estimated total time : {}s", 100*i/size, duration.as_secs(), ((duration.as_secs_f64()/i as f64)*size as f64) as u64);
             io::stdout().flush().unwrap();
         }
-        println!("");
+        println!();
         println!("created {} trades", self.trades.len());
     }
 
@@ -143,32 +143,26 @@ impl Backtester {
                 self.klines_data.len() - i * chunk_size
             };
 
-            let strategy_params_clone = strategy.1.clone();
+            let strategy_params_clone = strategy.1;
             let patterns_params_clone = strategy.2.clone();
 
             let chunk = Vec::from(&self.klines_data[start..][..num_elements]);
-            let handle = thread::spawn(move || {
-                strategy.0(chunk, strategy_params_clone, patterns_params_clone)
-            });
 
-            (i, start..start + num_elements, handle)
+            thread::spawn(move || {
+                strategy.0(chunk, strategy_params_clone, patterns_params_clone)
+            })
         }).collect::<Vec<_>>();
 
-        for (i, range, handle) in results {
+        for handle in results {
             let mut partial_results = handle.join().unwrap();
             self.trades.append(&mut partial_results);
         }
     }
 
     fn resolve_trades(&mut self) {
-        let mut i = 0;
-        let size = self.klines_data.len();
-        let start = Instant::now();
-        //println!("Trade resolution process starts. {} trades and {} klines data to process", self.trades.len(), self.klines_data.len());
         for kline in &self.klines_data {
             self.trades.iter_mut().for_each(|trade| {
                 if kline.close_time == trade.open_time && trade.status == Status::NotOpened {
-                    //trade.status = Status::NotTriggered;
                     trade.status = Status::Running;
                     if trade.entry_price <= kline.high && trade.entry_price >= kline.low && trade.status == Status::NotTriggered{
                         trade.status = Status::Running;
@@ -176,26 +170,20 @@ impl Backtester {
                 }
 
                 if kline.close_time > trade.open_time && trade.status == Status::Running {
-                    if Self::hit_price(trade.sl, &kline) && Self::hit_price(trade.tp, &kline) {
+                    if Self::hit_price(trade.sl, kline) && Self::hit_price(trade.tp, kline) {
                         trade.status = Status::Closed(TradeResult::Unknown);
-                    } else if Self::hit_price(trade.tp, &kline) {
+                    } else if Self::hit_price(trade.tp, kline) {
                         trade.status = Status::Closed(TradeResult::Win);
-                    } else if Self::hit_price(trade.sl, &kline) {
+                    } else if Self::hit_price(trade.sl, kline) {
                         trade.status = Status::Closed(TradeResult::Lost);
                     }
                 }
             });
-            i +=1;
-            //let duration = start.elapsed();
-            //print!("\rTrades resolved : {}% -- Elapsed time : {}s -- Estimated total time : {}s", 100*i/size, duration.as_secs(), ((duration.as_secs_f64()/i as f64)*size as f64) as u64);
-            //io::stdout().flush().unwrap();
         }
-        //println!("All trades resolved");
     }
 
     fn generate_results(&mut self, strategy: Strategy) {
-        let name;
-        name = strategy.1.name;
+        let name = strategy.1.name;
         let mut patterns_params = HashMap::new();
 
         for params in strategy.2.as_ref() {
@@ -209,28 +197,26 @@ impl Backtester {
         let total_unclosed = self.trades.len() - total_closed;
 
 
-        let win_ratio = ((total_win as f32*100./total_closed as f32 * 100.0).round() / 100.0) as f32;
-        let lose_ratio = ((total_lose as f32*100./total_closed as f32 * 100.0).round() / 100.0) as f32;
-        let unknown_ratio = ((total_unknown as f32*100./total_closed as f32 * 100.0).round() / 100.0) as f32;
+        let win_ratio = (total_win as f32*100./total_closed as f32 * 100.0).round() / 100.0;
+        let lose_ratio = (total_lose as f32*100./total_closed as f32 * 100.0).round() / 100.0;
+        let unknown_ratio = (total_unknown as f32*100./total_closed as f32 * 100.0).round() / 100.0;
         let needed_win_percentage = (((1./(1.+(strategy.1.tp_multiplier/strategy.1.sl_multiplier))*100.) * 100.0).round() / 100.0) as f32;
         let efficiency = (win_ratio/needed_win_percentage * 100.0).round() / 100.0;
-        
-        //(x * 100.0).round() / 100.0
 
         self.results.push(StrategyResult { 
-            name: name,
+            name,
             strategy_params: strategy.1,
-            patterns_params: patterns_params,
-            win_ratio: win_ratio,
-            lose_ratio: lose_ratio,
-            unknown_ratio: unknown_ratio,
-            total_win: total_win,
-            total_lose: total_lose,
-            total_closed: total_closed as usize,
-            total_unclosed: total_unclosed,
+            patterns_params,
+            win_ratio,
+            lose_ratio,
+            unknown_ratio,
+            total_win,
+            total_lose,
+            total_closed,
+            total_unclosed,
             rr_ratio: (needed_win_percentage*0.01* 100.0).round() / 100.0,
-            rr_lisible: String::from(format!("{}:{}", (strategy.1.tp_multiplier * (1./strategy.1.sl_multiplier) * 100.0).round() / 100.0, strategy.1.sl_multiplier * (1./strategy.1.sl_multiplier))),
-            efficiency: efficiency
+            rr_lisible: format!("{}:{}", (strategy.1.tp_multiplier * (1./strategy.1.sl_multiplier) * 100.0).round() / 100.0, strategy.1.sl_multiplier * (1./strategy.1.sl_multiplier)),
+            efficiency
          });
     }
 

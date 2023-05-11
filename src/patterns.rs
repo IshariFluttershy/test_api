@@ -138,7 +138,7 @@ pub fn find_w_pattern(vec: &[MathKLine], options: WPatternParams) -> Option<WPat
     let neckline_index: usize;
     let lower_price: f64;
     let neckline_price: f64;
-    let start_time: i64;
+    let start_time = vec[0].open_time;
     let end_time: i64;
 
     let is_down_test = vec![TestFunction{function: is_down, params: None}];
@@ -149,9 +149,7 @@ pub fn find_w_pattern(vec: &[MathKLine], options: WPatternParams) -> Option<WPat
     if vec.len() < n+options.klines_range || test_multiple_klines(vec, n, &is_down_test).is_none() {
         return None;
     }
-
-    start_time = vec[0].open_time;
-
+    
     // Get start of new upward trend
     if let Some(result) = test_multiple_klines(&vec[n..n+options.klines_range], n, &is_up_test) {
         start_index = result + n;
@@ -214,7 +212,7 @@ pub fn find_m_pattern(vec: &[MathKLine], options: MPatternParams) -> Option<MPat
     let neckline_index: usize;
     let higher_price: f64;
     let neckline_price: f64;
-    let start_time: i64;
+    let start_time = vec[0].open_time;
     let end_time: i64;
 
     let is_down_test = vec![TestFunction{function: is_down, params: None}];
@@ -225,8 +223,6 @@ pub fn find_m_pattern(vec: &[MathKLine], options: MPatternParams) -> Option<MPat
     if vec.len() < n+options.klines_range || test_multiple_klines(vec, n, &is_up_test).is_none() {
         return None;
     }
-
-    start_time = vec[0].open_time;
 
     // Get start of new downward trend
     if let Some(result) = test_multiple_klines(&vec[n..n+options.klines_range], n, &is_down_test) {
@@ -313,9 +309,9 @@ pub fn find_bull_reversal(vec: &[MathKLine], options: ReversalPatternParams) -> 
 fn test_multiple_klines(vec: &[MathKLine], repetitions: usize, tests: &[TestFunction]) -> Option<usize> {
     let mut success_count = 0;
 
-    for i in 0..vec.len() {
+    for (i, item) in vec.iter().enumerate() {
         for test in tests {
-            if (test.function)(vec[i].clone(), test.params) {
+            if (test.function)(item.clone(), test.params) {
                 success_count += 1;
             } else {
                 success_count = 0;
@@ -356,10 +352,10 @@ pub unsafe fn _create_test_kline(open: f64, close: f64) -> MathKLine {
     _KLINE_TIME += 1;
     MathKLine{
         open_time: _KLINE_TIME,
-        open: open,
+        open,
         high: if open > close {open + 0.5} else {close + 0.5},
         low: if open < close {open - 0.5} else {close - 0.5},
-        close: close,
+        close,
         volume: "".to_string(),
         close_time: _KLINE_TIME+1,
         quote_asset_volume: "".to_string(),
