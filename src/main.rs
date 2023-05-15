@@ -128,22 +128,23 @@ fn main() {
     }*/
 
     let results_json = serde_json::to_string_pretty(&results).unwrap();
-    let mut file = File::create(RESULTS_PATH.to_owned() + generate_result_name().as_str()).unwrap();
+    let mut file = File::create(RESULTS_PATH.to_owned() + MONEY_EVOLUTION_PATH + generate_result_name().as_str()).unwrap();
     file.write_all(results_json.as_bytes()).unwrap();
 
     results.iter_mut().for_each(|x| x.money_evolution.clear());
     let results_json = serde_json::to_string_pretty(&results).unwrap();
-    let mut file = File::create(RESULTS_PATH.to_owned() + MONEY_EVOLUTION_PATH + generate_result_name().as_str()).unwrap();
+    let mut file = File::create(RESULTS_PATH.to_owned() + generate_result_name().as_str()).unwrap();
     file.write_all(results_json.as_bytes()).unwrap();
 
     let affined_results_json = serde_json::to_string_pretty(&affined_results).unwrap();
-    let mut file = File::create(AFFINED_RESULTS_PATH.to_owned() + generate_result_name().as_str()).unwrap();
+    let mut file = File::create(AFFINED_RESULTS_PATH.to_owned() + MONEY_EVOLUTION_PATH + generate_result_name().as_str()).unwrap();
     file.write_all(affined_results_json.as_bytes()).unwrap();
 
     affined_results.iter_mut().for_each(|x| x.money_evolution.clear());
     let affined_results_json = serde_json::to_string_pretty(&affined_results).unwrap();
-    let mut file = File::create(AFFINED_RESULTS_PATH.to_owned() + MONEY_EVOLUTION_PATH + generate_result_name().as_str()).unwrap();
+    let mut file = File::create(AFFINED_RESULTS_PATH.to_owned() + generate_result_name().as_str()).unwrap();
     file.write_all(affined_results_json.as_bytes()).unwrap();
+
 
     /*println!(
         "trades not opened == {}",
