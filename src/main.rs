@@ -18,10 +18,12 @@ use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use std::sync::Arc;
+use chrono::{Datelike, Timelike, Utc};
 
 const DATA_PATH: &str = "data/testdataPart.json";
-const RESULTS_PATH: &str = "results/full/results.json";
-const AFFINED_RESULTS_PATH: &str = "results/affined/results.json";
+const RESULTS_PATH: &str = "results/full/";
+const AFFINED_RESULTS_PATH: &str = "results/affined/";
+const MONEY_EVOLUTION_PATH: &str = "withMoneyEvolution/";
 
 struct ParamMultiplier {
     min: f64,
@@ -89,30 +91,30 @@ fn main() {
     create_w_and_m_pattern_strategies(
         &mut backtester,
         ParamMultiplier {
-            min: 1.,
+            min: 2.,
             max: 2.,
             step: 1.,
         },
         ParamMultiplier {
-            min: 0.5,
-            max: 2.,
-            step: 0.5,
+            min: 1.,
+            max: 1.,
+            step: 1.,
         },
-        3,
-        5,
+        4,
+        4,
         20,
         20,
         ParamMultiplier {
-            min: 0.5,
-            max: 2.,
-            step: 0.5,
+            min: 5.,
+            max: 5.,
+            step: 1.,
         }
     );
     backtester.start();
     println!();
 
-    let results = backtester.get_results();
-    let affined_results: Vec<StrategyResult> = results
+    let mut results = backtester.get_results();
+    let mut affined_results: Vec<StrategyResult> = results
         .iter()
         .filter(|x| x.total_closed > 100)
         .cloned()
@@ -125,12 +127,22 @@ fn main() {
         //}
     }*/
 
-    let results_json = serde_json::to_string_pretty(results).unwrap();
-    let mut file = File::create(RESULTS_PATH).unwrap();
+    let results_json = serde_json::to_string_pretty(&results).unwrap();
+    let mut file = File::create(RESULTS_PATH.to_owned() + generate_result_name().as_str()).unwrap();
+    file.write_all(results_json.as_bytes()).unwrap();
+
+    results.iter_mut().for_each(|x| x.money_evolution.clear());
+    let results_json = serde_json::to_string_pretty(&results).unwrap();
+    let mut file = File::create(RESULTS_PATH.to_owned() + MONEY_EVOLUTION_PATH + generate_result_name().as_str()).unwrap();
     file.write_all(results_json.as_bytes()).unwrap();
 
     let affined_results_json = serde_json::to_string_pretty(&affined_results).unwrap();
-    let mut file = File::create(AFFINED_RESULTS_PATH).unwrap();
+    let mut file = File::create(AFFINED_RESULTS_PATH.to_owned() + generate_result_name().as_str()).unwrap();
+    file.write_all(affined_results_json.as_bytes()).unwrap();
+
+    affined_results.iter_mut().for_each(|x| x.money_evolution.clear());
+    let affined_results_json = serde_json::to_string_pretty(&affined_results).unwrap();
+    let mut file = File::create(AFFINED_RESULTS_PATH.to_owned() + MONEY_EVOLUTION_PATH + generate_result_name().as_str()).unwrap();
     file.write_all(affined_results_json.as_bytes()).unwrap();
 
     /*println!(
@@ -167,6 +179,11 @@ fn main() {
         }
         Err(e) => println!("Error: {:?}", e),
     }*/
+}
+
+fn generate_result_name() -> String {
+    let now = Utc::now();
+    format!("{}_{}_{}_{}h{}m{}s.json", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second())
 }
 
 fn create_reversal_pattern_strategies(

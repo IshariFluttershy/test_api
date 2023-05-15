@@ -75,6 +75,7 @@ pub struct StrategyResult{
     pub rr_lisible: String,
     pub efficiency: f32,
     pub final_money: f64,
+    pub money_evolution: Vec<f64>
 }
 
 pub struct Backtester {
@@ -82,7 +83,8 @@ pub struct Backtester {
     trades: Vec<Trade>,
     num_workers: usize,
     strategies: Vec<Strategy>,
-    results: Vec<StrategyResult>
+    results: Vec<StrategyResult>,
+    current_strategy_money_evolution: Vec<f64>
 }
 
 impl Backtester {
@@ -92,7 +94,8 @@ impl Backtester {
             trades: Vec::new(),
             num_workers,
             strategies: Vec::new(),
-            results: Vec::new()
+            results: Vec::new(),
+            current_strategy_money_evolution: Vec::new()
         }
     }
 
@@ -175,9 +178,11 @@ impl Backtester {
                         trade.status = Status::Closed(TradeResult::Unknown);
                     } else if Self::hit_price(trade.tp, kline) {
                         strategy.1.money += strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.tp_multiplier;
+                        self.current_strategy_money_evolution.push(strategy.1.money);
                         trade.status = Status::Closed(TradeResult::Win);
                     } else if Self::hit_price(trade.sl, kline) {
                         strategy.1.money -= strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.sl_multiplier;
+                        self.current_strategy_money_evolution.push(strategy.1.money);
                         trade.status = Status::Closed(TradeResult::Lost);
                         if strategy.1.money <= 0. {
                             return;
@@ -225,11 +230,13 @@ impl Backtester {
             rr_lisible: format!("{}:{}", (strategy.1.tp_multiplier * (1./strategy.1.sl_multiplier) * 100.0).round() / 100.0, strategy.1.sl_multiplier * (1./strategy.1.sl_multiplier)),
             efficiency,
             final_money,
+            money_evolution: self.current_strategy_money_evolution.clone()
          });
     }
 
     fn clean_trades(&mut self) {
         self.trades.clear();
+        self.current_strategy_money_evolution.clear();
     }
 
     pub fn add_strategy(&mut self, strategy: Strategy) -> &mut Self {
@@ -268,8 +275,8 @@ impl Backtester {
         result
     }
 
-    pub fn get_results(&self) -> &Vec<StrategyResult> {
-        &self.results
+    pub fn get_results(&self) -> Vec<StrategyResult> {
+        self.results.clone()
     }
 
     fn hit_price(price: f64, kline: &MathKLine) -> bool {
