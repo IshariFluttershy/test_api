@@ -10,6 +10,8 @@ use crate::patterns::*;
 pub struct StrategyParams {
     pub tp_multiplier: f64,
     pub sl_multiplier: f64,
+    pub risk_per_trade: f64,
+    pub money: f64,
     pub name: StrategyName,
 }
 

@@ -73,7 +73,8 @@ pub struct StrategyResult{
     pub total_unclosed: usize,
     pub rr_ratio: f32,
     pub rr_lisible: String,
-    pub efficiency: f32
+    pub efficiency: f32,
+    pub final_money: f64,
 }
 
 pub struct Backtester {
@@ -100,9 +101,9 @@ impl Backtester {
         let size = self.strategies.len();
         let start = Instant::now();
 
-        for strategy in self.strategies.clone() {
+        for mut strategy in self.strategies.clone() {
             self.create_trades_from_strategy(strategy.clone());
-            self.resolve_trades();
+            self.resolve_trades(&mut strategy);
             self.generate_results(strategy);
             self.clean_trades();
 
@@ -159,7 +160,7 @@ impl Backtester {
         }
     }
 
-    fn resolve_trades(&mut self) {
+    fn resolve_trades(&mut self, strategy: &mut Strategy) {
         for kline in &self.klines_data {
             self.trades.iter_mut().for_each(|trade| {
                 if kline.close_time == trade.open_time && trade.status == Status::NotOpened {
@@ -173,9 +174,14 @@ impl Backtester {
                     if Self::hit_price(trade.sl, kline) && Self::hit_price(trade.tp, kline) {
                         trade.status = Status::Closed(TradeResult::Unknown);
                     } else if Self::hit_price(trade.tp, kline) {
+                        strategy.1.money += strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.tp_multiplier;
                         trade.status = Status::Closed(TradeResult::Win);
                     } else if Self::hit_price(trade.sl, kline) {
+                        strategy.1.money -= strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.sl_multiplier;
                         trade.status = Status::Closed(TradeResult::Lost);
+                        if strategy.1.money <= 0. {
+                            return;
+                        }
                     }
                 }
             });
@@ -202,6 +208,7 @@ impl Backtester {
         let unknown_ratio = (total_unknown as f32*100./total_closed as f32 * 100.0).round() / 100.0;
         let needed_win_percentage = (((1./(1.+(strategy.1.tp_multiplier/strategy.1.sl_multiplier))*100.) * 100.0).round() / 100.0) as f32;
         let efficiency = (win_ratio/needed_win_percentage * 100.0).round() / 100.0;
+        let final_money = strategy.1.money;
 
         self.results.push(StrategyResult { 
             name,
@@ -216,7 +223,8 @@ impl Backtester {
             total_unclosed,
             rr_ratio: (needed_win_percentage*0.01* 100.0).round() / 100.0,
             rr_lisible: format!("{}:{}", (strategy.1.tp_multiplier * (1./strategy.1.sl_multiplier) * 100.0).round() / 100.0, strategy.1.sl_multiplier * (1./strategy.1.sl_multiplier)),
-            efficiency
+            efficiency,
+            final_money,
          });
     }
 
