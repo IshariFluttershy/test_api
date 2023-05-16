@@ -1,5 +1,5 @@
-Passer l'appli en service web que l'on puisse controler avec des requetes
+Passer l'appli en service web que l'on puisse controler avec des requetes => next step
 Regarder pourquoi l'app prend pas 100% du proc et l'accelerer au maximum
-Prendre en compte les taxes dans les trades (taker/maker) -> en cours
 implementer un écart de prix minimum dans la prise de trades (patterns)
+Prendre en compte les taxes dans les trades (taker/maker) -> Done
 calculer les leviers necessaires pour le Money management  ---  lever = ((Cap/Cav)-1)/((Pv/Pa)-1) -> Normalement c'est fait 
