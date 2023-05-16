@@ -14,3 +14,4 @@ serde_json = "1.0"
 binance = { git = "https://github.com/wisespace-io/binance-rs.git" }
 downcast-rs = "1.2"
 chrono = "0.4.24"
+strategy_backtester = { path = "../strategy_backtester" }

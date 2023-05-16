@@ -978,6 +978,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "strategy_backtester"
+version = "0.1.0"
+dependencies = [
+ "binance",
+ "chrono",
+ "downcast-rs",
+ "hmac",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1029,6 +1043,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "strategy_backtester",
  "tokio",
 ]
 

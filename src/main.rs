@@ -1,10 +1,8 @@
-mod backtest;
-mod patterns;
-mod strategies;
-
-use crate::backtest::*;
-use crate::patterns::*;
-use crate::strategies::*;
+extern crate strategy_backtester;
+use strategy_backtester::*;
+use strategy_backtester::backtest::*;
+use strategy_backtester::patterns::*;
+use strategy_backtester::strategies::*;
 use binance::account::*;
 use binance::api::*;
 use binance::config::*;
