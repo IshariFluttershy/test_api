@@ -5,7 +5,6 @@ use strategy_backtester::patterns::*;
 use strategy_backtester::strategies::*;
 use binance::account::*;
 use binance::api::*;
-use binance::config::*;
 use binance::futures::account::*;
 use binance::futures::general::FuturesGeneral;
 use binance::futures::*;
@@ -32,37 +31,8 @@ struct ParamMultiplier {
 }
 
 fn main() {
-    let futures_api_key =
-        Some("6e2439bdb37395afb6d6a6a7d33c93811c0dc2f4900e0638ff375ba66d63fae8".into());
-    let futures_secret_key =
-        Some("56e8e3153a0503f45ab6e88614e3a313093b28487a748e87f320c2a9c10a43f1".into());
-
-    let config =
-        Config::default().set_futures_rest_api_endpoint("https://testnet.binancefuture.com");
-    let account: FuturesAccount =
-        Binance::new_with_config(futures_api_key, futures_secret_key, &config);
-    //let market: FuturesMarket = Binance::new_with_config(None, None, &config);
-    //let general: FuturesGeneral = Binance::new_with_config(None, None, &config);
-
-    //let account: FuturesAccount = Binance::new_with_config(futures_api_key, futures_secret_key, &config);
     let market: Market = Binance::new(None, None);
     let general: FuturesGeneral = Binance::new(None, None);
-
-    /*match account.account_balance() {
-        Ok(answer) => println!("{:#?}", answer),
-        Err(e) => println!("Error: {:?}", e),
-    }*/
-
-    /*let price: Option<f64> = match market.get_price("BNBUSDT") {
-        Ok(answer) => {
-            println!("{:#?}", answer);
-            Some(answer.price)
-        }
-        Err(e) => {
-            println!("Error: {:?}", e);
-            None
-        }
-    };*/
 
     let mut server_time = 0;
     let result = general.get_server_time();
@@ -86,8 +56,6 @@ fn main() {
     }
 
     let mut backtester = Backtester::new(klines, 64);
-    //create_reversal_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 5., step: 0.5}, PriceMultiplier{min: 1., max: 1., step: 0.01}, 3, 7, 1, 5);
-    //create_w_and_m_pattern_strategies(&mut backtester, PriceMultiplier{ min: 0.5, max: 2., step: 0.5}, PriceMultiplier{min: 0.5, max: 2., step: 0.5}, 1, 5, 15, 15);
     create_w_and_m_pattern_strategies(
         &mut backtester,
         ParamMultiplier {
@@ -121,13 +89,6 @@ fn main() {
         .cloned()
         .collect();
 
-    /*for result in results {
-        //if result.win_ratio > 100.*rr_ratio as f32{
-            println!("rr ratio: {} -- with sl mul: {} -- with tp mul: {}", result.rr_ratio, result.strategy_params.sl_multiplier, result.strategy_params.tp_multiplier);
-            println!("{:#?}", result);
-        //}
-    }*/
-
     let results_json = serde_json::to_string_pretty(&results).unwrap();
     let mut file = File::create(RESULTS_PATH.to_owned() + MONEY_EVOLUTION_PATH + generate_result_name().as_str()).unwrap();
     file.write_all(results_json.as_bytes()).unwrap();
@@ -147,40 +108,6 @@ fn main() {
     file.write_all(affined_results_json.as_bytes()).unwrap();
 
 
-    /*println!(
-        "trades not opened == {}",
-        backtester.get_num_status(Status::NotOpened)
-    );
-    println!(
-        "trades NotTriggered == {}",
-        backtester.get_num_status(Status::NotTriggered)
-    );
-    println!(
-        "trades Running == {}",
-        backtester.get_num_status(Status::Running)
-    );
-    println!("trades closed == {}", backtester.get_num_closed());
-
-    println!("WR stats == {:#?}%", backtester.get_wr_ratio());
-    println!(
-        "WR stats for BullReversal == {:#?}%",
-        backtester.get_wr_ratio_with_strategy(StrategyName::BullReversal)
-    );*/
-
-    /*match account.market_buy("BTCUSDT", 0.1) {
-        Ok(answer) => {
-            println!("{:#?}", answer);
-            match account.stop_market_close_sell("BTCUSDT", price.unwrap()-500.0) {
-                Ok(answer) => println!("{:#?}", answer),
-                Err(e) => println!("Error: {:?}", e),
-            }
-            match account.custom_order(tp_market_close("BTCUSDT", price.unwrap()+500.0, OrderSide::Sell)) {
-                Ok(answer) => println!("{:#?}", answer),
-                Err(e) => println!("Error: {:?}", e),
-            }
-        }
-        Err(e) => println!("Error: {:?}", e),
-    }*/
 }
 
 fn generate_result_name() -> String {
@@ -360,3 +287,55 @@ fn _tp_market_close(symbol: &str, stop_price: f64, side: OrderSide) -> CustomOrd
         price_protect: None,
     }
 }
+
+
+
+/* CODE POUR UTILISER L'API BINANCE A GARDER POUR PLUS TARD
+
+    let futures_api_key =
+        Some("6e2439bdb37395afb6d6a6a7d33c93811c0dc2f4900e0638ff375ba66d63fae8".into());
+    let futures_secret_key =
+        Some("56e8e3153a0503f45ab6e88614e3a313093b28487a748e87f320c2a9c10a43f1".into());
+
+    let config =
+        Config::default().set_futures_rest_api_endpoint("https://testnet.binancefuture.com");
+    let account: FuturesAccount =
+        Binance::new_with_config(futures_api_key, futures_secret_key, &config);
+    //let market: FuturesMarket = Binance::new_with_config(None, None, &config);
+    //let general: FuturesGeneral = Binance::new_with_config(None, None, &config);
+
+    //let account: FuturesAccount = Binance::new_with_config(futures_api_key, futures_secret_key, &config);
+    let market: Market = Binance::new(None, None);
+    let general: FuturesGeneral = Binance::new(None, None);
+
+    /*match account.account_balance() {
+        Ok(answer) => println!("{:#?}", answer),
+        Err(e) => println!("Error: {:?}", e),
+    }*/
+
+    /*let price: Option<f64> = match market.get_price("BNBUSDT") {
+        Ok(answer) => {
+            println!("{:#?}", answer);
+            Some(answer.price)
+        }
+        Err(e) => {
+            println!("Error: {:?}", e);
+            None
+        }
+    };*/
+
+    /*match account.market_buy("BTCUSDT", 0.1) {
+        Ok(answer) => {
+            println!("{:#?}", answer);
+            match account.stop_market_close_sell("BTCUSDT", price.unwrap()-500.0) {
+                Ok(answer) => println!("{:#?}", answer),
+                Err(e) => println!("Error: {:?}", e),
+            }
+            match account.custom_order(tp_market_close("BTCUSDT", price.unwrap()+500.0, OrderSide::Sell)) {
+                Ok(answer) => println!("{:#?}", answer),
+                Err(e) => println!("Error: {:?}", e),
+            }
+        }
+        Err(e) => println!("Error: {:?}", e),
+    }*/
+ */
