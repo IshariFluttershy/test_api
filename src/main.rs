@@ -218,7 +218,7 @@ fn create_reversal_pattern_strategies(
                             StrategyParams {
                                 tp_multiplier: i,
                                 sl_multiplier: j,
-                                risk_per_trade: m,
+                                risk_per_trade: m * 0.01,
                                 money: 100.,
                                 name: StrategyName::BullReversal,
                             },
@@ -273,7 +273,7 @@ fn create_w_and_m_pattern_strategies(
                             StrategyParams {
                                 tp_multiplier: i,
                                 sl_multiplier: j,
-                                risk_per_trade: m,
+                                risk_per_trade: m * 0.01,
                                 money: 100.,
                                 name: StrategyName::W,
                             },
@@ -285,7 +285,7 @@ fn create_w_and_m_pattern_strategies(
                             StrategyParams {
                                 tp_multiplier: i,
                                 sl_multiplier: j,
-                                risk_per_trade: m,
+                                risk_per_trade: m * 0.01,
                                 money: 100.,
                                 name: StrategyName::M,
                             },

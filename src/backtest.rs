@@ -57,6 +57,8 @@ pub struct Trade {
     pub money: f64,
     pub benefits: f64,
     pub loss: f64,
+    pub taxes: f64,
+    pub lots: f64,
     pub closing_kline: Option<MathKLine>,
     pub opening_kline: MathKLine,
     pub strategy: StrategyName,
@@ -171,9 +173,17 @@ impl Backtester {
             self.trades.iter_mut().for_each(|trade| {
                 if kline.close_time == trade.open_time && trade.status == Status::NotOpened {
                     trade.status = Status::Running;
+                    // taker et maker 0.1% de frais
+                    //Nombre de lots = (Capital de départ x % de capital risqué dans le trade x Ratio risque/récompense) / (Prix d'entrée - Prix de stop-loss)
+                    let lots = (strategy.1.money * strategy.1.risk_per_trade * (strategy.1.sl_multiplier/strategy.1.tp_multiplier)) / (trade.entry_price - trade.sl);
+                    let taxes = lots * trade.entry_price * 0.001;
+                    strategy.1.money -= taxes;
                     trade.money = strategy.1.money;
-                    trade.benefits = strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.tp_multiplier;
-                    trade.loss = strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.sl_multiplier;
+                    
+                    trade.lots = lots;
+                    trade.taxes = taxes;
+                    trade.benefits = trade.money * strategy.1.risk_per_trade * strategy.1.tp_multiplier;
+                    trade.loss = trade.money * strategy.1.risk_per_trade * strategy.1.sl_multiplier;
                     let leverage = (((trade.money + trade.benefits) / trade.money) - 1.) / ((trade.tp / trade.entry_price) - 1.);
                     println!("leverage == {} for trade {:#?}", leverage, trade);
                     if trade.entry_price <= kline.high && trade.entry_price >= kline.low && trade.status == Status::NotTriggered{
@@ -186,16 +196,16 @@ impl Backtester {
                     if Self::hit_price(trade.sl, kline) && Self::hit_price(trade.tp, kline) {
                         trade.status = Status::Closed(TradeResult::Unknown);
                     } else if Self::hit_price(trade.tp, kline) {
-                        strategy.1.money += strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.tp_multiplier;
+                        strategy.1.money += strategy.1.money * strategy.1.risk_per_trade * strategy.1.tp_multiplier;
                         self.current_strategy_money_evolution.push(strategy.1.money);
                         trade.status = Status::Closed(TradeResult::Win);
                     } else if Self::hit_price(trade.sl, kline) {
-                        strategy.1.money -= strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.sl_multiplier;
+                        strategy.1.money -= strategy.1.money * strategy.1.risk_per_trade * strategy.1.sl_multiplier;
                         self.current_strategy_money_evolution.push(strategy.1.money);
                         trade.status = Status::Closed(TradeResult::Lost);
-                        if strategy.1.money <= 0. {
-                            return;
-                        }
+                    }
+                    if strategy.1.money <= 0. {
+                        return;
                     }
                 }
             });
