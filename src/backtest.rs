@@ -12,6 +12,10 @@ use crate::strategies::*;
 pub type StrategyFunc = fn(Vec<MathKLine>, StrategyParams, Arc<Vec<Arc<dyn PatternParams>>>) -> Vec<Trade>;
 pub type Strategy = (StrategyFunc, StrategyParams, Arc<Vec<Arc<dyn PatternParams>>>);
 
+const TAXES_SPOT: f64 = 0.000;
+const TAXES_FUTURES: f64 = 0.0002;
+
+
 #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub enum StrategyName {
     None,
@@ -175,15 +179,33 @@ impl Backtester {
                     trade.status = Status::Running;
                     // taker et maker 0.1% de frais
                     //Nombre de lots = (Capital de départ x % de capital risqué dans le trade x Ratio risque/récompense) / (Prix d'entrée - Prix de stop-loss)
-                    let lots = (strategy.1.money * strategy.1.risk_per_trade * (strategy.1.sl_multiplier/strategy.1.tp_multiplier)) / (trade.entry_price - trade.sl);
-                    let taxes = lots * trade.entry_price * 0.001;
+                    let mut lots = (strategy.1.money * strategy.1.risk_per_trade * (strategy.1.sl_multiplier/strategy.1.tp_multiplier)) / (trade.entry_price - trade.sl);
+                    let taxes_rate;
+
+                    match strategy.1.market_type {
+                        MarketType::Spot => {
+                            taxes_rate = TAXES_SPOT;
+                            if lots * trade.entry_price > strategy.1.money {
+                                lots = strategy.1.money / trade.entry_price;
+                            }
+                        }
+                        MarketType::Futures => {
+                            taxes_rate = TAXES_FUTURES;
+                        }
+                    }
+
+                    let taxes = lots * trade.entry_price * taxes_rate;
                     strategy.1.money -= taxes;
                     trade.money = strategy.1.money;
-                    
                     trade.lots = lots;
                     trade.taxes = taxes;
+
                     trade.benefits = trade.money * strategy.1.risk_per_trade * strategy.1.tp_multiplier;
                     trade.loss = trade.money * strategy.1.risk_per_trade * strategy.1.sl_multiplier;
+
+                    trade.benefits = lots * trade.tp - lots * trade.entry_price;
+                    trade.loss = lots * trade.entry_price - lots * trade.sl;
+
                     let leverage = (((trade.money + trade.benefits) / trade.money) - 1.) / ((trade.tp / trade.entry_price) - 1.);
                     println!("leverage == {} for trade {:#?}", leverage, trade);
                     if trade.entry_price <= kline.high && trade.entry_price >= kline.low && trade.status == Status::NotTriggered{
@@ -196,11 +218,11 @@ impl Backtester {
                     if Self::hit_price(trade.sl, kline) && Self::hit_price(trade.tp, kline) {
                         trade.status = Status::Closed(TradeResult::Unknown);
                     } else if Self::hit_price(trade.tp, kline) {
-                        strategy.1.money += strategy.1.money * strategy.1.risk_per_trade * strategy.1.tp_multiplier;
+                        strategy.1.money += trade.benefits;
                         self.current_strategy_money_evolution.push(strategy.1.money);
                         trade.status = Status::Closed(TradeResult::Win);
                     } else if Self::hit_price(trade.sl, kline) {
-                        strategy.1.money -= strategy.1.money * strategy.1.risk_per_trade * strategy.1.sl_multiplier;
+                        strategy.1.money -= trade.loss;
                         self.current_strategy_money_evolution.push(strategy.1.money);
                         trade.status = Status::Closed(TradeResult::Lost);
                     }

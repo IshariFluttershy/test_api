@@ -7,6 +7,12 @@ use crate::backtest::*;
 use crate::patterns::*;
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+pub enum MarketType {
+    Spot,
+    Futures
+}
+
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct StrategyParams {
     pub tp_multiplier: f64,
     pub sl_multiplier: f64,
@@ -14,6 +20,7 @@ pub struct StrategyParams {
     #[serde(skip_serializing)]
     pub money: f64,
     pub name: StrategyName,
+    pub market_type: MarketType,
 }
 
 pub fn create_wpattern_trades(

@@ -24,6 +24,8 @@ const DATA_PATH: &str = "data/testdataPart.json";
 const RESULTS_PATH: &str = "results/full/";
 const AFFINED_RESULTS_PATH: &str = "results/affined/";
 const MONEY_EVOLUTION_PATH: &str = "withMoneyEvolution/";
+const START_MONEY: f64 = 100.;
+
 
 struct ParamMultiplier {
     min: f64,
@@ -105,10 +107,11 @@ fn main() {
         20,
         20,
         ParamMultiplier {
-            min: 5.,
-            max: 5.,
+            min: 1.,
+            max: 1.,
             step: 1.,
-        }
+        },
+        MarketType::Spot
     );
     backtester.start();
     println!();
@@ -196,6 +199,7 @@ fn create_reversal_pattern_strategies(
     min_counter_trend_size: usize,
     max_counter_trend_size: usize,
     risk: ParamMultiplier,
+    market_type: MarketType
 ) {
     let mut strategies: Vec<Strategy> = Vec::new();
     let mut i = tp.min;
@@ -219,8 +223,9 @@ fn create_reversal_pattern_strategies(
                                 tp_multiplier: i,
                                 sl_multiplier: j,
                                 risk_per_trade: m * 0.01,
-                                money: 100.,
+                                money: START_MONEY,
                                 name: StrategyName::BullReversal,
+                                market_type
                             },
                             Arc::new(reversal_pattern_params),
                         ));
@@ -244,6 +249,7 @@ fn create_w_and_m_pattern_strategies(
     min_klines_range: usize,
     max_klines_range: usize,
     risk: ParamMultiplier,
+    market_type: MarketType
 ) {
     let mut strategies: Vec<Strategy> = Vec::new();
     let mut i = tp.min;
@@ -274,8 +280,9 @@ fn create_w_and_m_pattern_strategies(
                                 tp_multiplier: i,
                                 sl_multiplier: j,
                                 risk_per_trade: m * 0.01,
-                                money: 100.,
+                                money: START_MONEY,
                                 name: StrategyName::W,
+                                market_type
                             },
                             Arc::new(pattern_params_w),
                         ));
@@ -286,8 +293,9 @@ fn create_w_and_m_pattern_strategies(
                                 tp_multiplier: i,
                                 sl_multiplier: j,
                                 risk_per_trade: m * 0.01,
-                                money: 100.,
+                                money: START_MONEY,
                                 name: StrategyName::M,
+                                market_type
                             },
                             Arc::new(pattern_params_m),
                         ));*/
