@@ -280,7 +280,7 @@ fn create_w_and_m_pattern_strategies(
                             Arc::new(pattern_params_w),
                         ));
 
-                        strategies.push((
+                        /*strategies.push((
                             strategies::create_mpattern_trades,
                             StrategyParams {
                                 tp_multiplier: i,
@@ -290,7 +290,7 @@ fn create_w_and_m_pattern_strategies(
                                 name: StrategyName::M,
                             },
                             Arc::new(pattern_params_m),
-                        ));
+                        ));*/
                         m += risk.step;
                     }
                 }
@@ -305,7 +305,7 @@ fn create_w_and_m_pattern_strategies(
 }
 
 fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
-    let mut i: u64 = 10000;
+    let mut i: u64 = 100;
     let start_i = i;
     let mut j = 0;
     let mut start_time = server_time - (i * 60 * 1000 * 1000);

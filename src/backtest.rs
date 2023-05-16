@@ -54,6 +54,9 @@ pub struct Trade {
     pub status: Status,
     pub open_time: i64,
     pub close_time: i64,
+    pub money: f64,
+    pub benefits: f64,
+    pub loss: f64,
     pub closing_kline: Option<MathKLine>,
     pub opening_kline: MathKLine,
     pub strategy: StrategyName,
@@ -168,8 +171,14 @@ impl Backtester {
             self.trades.iter_mut().for_each(|trade| {
                 if kline.close_time == trade.open_time && trade.status == Status::NotOpened {
                     trade.status = Status::Running;
+                    trade.money = strategy.1.money;
+                    trade.benefits = strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.tp_multiplier;
+                    trade.loss = strategy.1.money * strategy.1.risk_per_trade * 0.01 * strategy.1.sl_multiplier;
+                    let leverage = (((trade.money + trade.benefits) / trade.money) - 1.) / ((trade.tp / trade.entry_price) - 1.);
+                    println!("leverage == {} for trade {:#?}", leverage, trade);
                     if trade.entry_price <= kline.high && trade.entry_price >= kline.low && trade.status == Status::NotTriggered{
                         trade.status = Status::Running;
+                        //((Cap/Cav)-1)/((Pv/Pa)-1)
                     }
                 }
 
