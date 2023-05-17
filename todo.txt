@@ -1,5 +1,12 @@
-Passer l'appli en service web que l'on puisse controler avec des requetes => next step
+Faire un front end
+Faire une queue de dl de données => Done
+Faire un pool de workers pour les tests de strats.
+Passer le test d'une strat en mono thread.
+Passer la création de plusieurs strats en ajout dans une liste d'attente pour la pool de workers.
 Regarder pourquoi l'app prend pas 100% du proc et l'accelerer au maximum
 implementer un écart de prix minimum dans la prise de trades (patterns)
+
+
+Passer l'appli en service web que l'on puisse controler avec des requetes => Done
 Prendre en compte les taxes dans les trades (taker/maker) -> Done
 calculer les leviers necessaires pour le Money management  ---  lever = ((Cap/Cav)-1)/((Pv/Pa)-1) -> Normalement c'est fait 
