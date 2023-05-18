@@ -2,6 +2,7 @@ extern crate strategy_backtester;
 use strategy_backtester::*;
 use strategy_backtester::backtest::*;
 use strategy_backtester::patterns::*;
+use strategy_backtester::strategies_creator::*;
 use strategy_backtester::strategies::*;
 use binance::account::*;
 use binance::api::*;
@@ -22,13 +23,6 @@ const RESULTS_PATH: &str = "results/full/";
 const AFFINED_RESULTS_PATH: &str = "results/affined/";
 const MONEY_EVOLUTION_PATH: &str = "withMoneyEvolution/";
 const START_MONEY: f64 = 100.;
-
-
-struct ParamMultiplier {
-    min: f64,
-    max: f64,
-    step: f64,
-}
 
 fn main() {
     let market: Market = Binance::new(None, None);
@@ -56,22 +50,28 @@ fn main() {
     }
 
     let mut backtester = Backtester::new(klines, 64);
-    create_w_and_m_pattern_strategies(
-        &mut backtester,
+    let mut strategies = create_w_and_m_pattern_strategies(
+        START_MONEY,
         ParamMultiplier {
-            min: 2.,
-            max: 2.,
-            step: 1.,
+            min: 0.5,
+            max: 20.,
+            step: 0.5,
         },
         ParamMultiplier {
-            min: 1.,
-            max: 1.,
-            step: 1.,
+            min: 0.5,
+            max: 4.,
+            step: 0.5,
         },
-        4,
-        4,
-        20,
-        20,
+        ParamMultiplier {
+            min: 1,
+            max: 7,
+            step: 1
+        },
+        ParamMultiplier {
+            min: 8,
+            max: 40,
+            step: 2
+        },
         ParamMultiplier {
             min: 1.,
             max: 1.,
@@ -79,6 +79,7 @@ fn main() {
         },
         MarketType::Spot
     );
+    backtester.add_strategies(&mut strategies);
     backtester.start();
     println!();
 
@@ -113,128 +114,6 @@ fn main() {
 fn generate_result_name() -> String {
     let now = Utc::now();
     format!("{}_{}_{}_{}h{}m{}s.json", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second())
-}
-
-fn create_reversal_pattern_strategies(
-    backtester: &mut Backtester,
-    tp: ParamMultiplier,
-    sl: ParamMultiplier,
-    min_trend_size: usize,
-    max_trend_size: usize,
-    min_counter_trend_size: usize,
-    max_counter_trend_size: usize,
-    risk: ParamMultiplier,
-    market_type: MarketType
-) {
-    let mut strategies: Vec<Strategy> = Vec::new();
-    let mut i = tp.min;
-    while i <= tp.max {
-        let mut j = sl.min;
-        while j <= sl.max {
-            for k in min_trend_size..=max_trend_size {
-                for l in min_counter_trend_size..=max_counter_trend_size {
-                    let mut m = risk.min;
-                    while m <= risk.max {
-                        let reversal_pattern_params: Vec<Arc<dyn PatternParams>> =
-                            vec![Arc::new(ReversalPatternParams {
-                                trend_size: k,
-                                counter_trend_size: l,
-                                name: PatternName::BullReversal,
-                            })];
-
-                        strategies.push((
-                            strategies::create_bull_reversal_trades,
-                            StrategyParams {
-                                tp_multiplier: i,
-                                sl_multiplier: j,
-                                risk_per_trade: m * 0.01,
-                                money: START_MONEY,
-                                name: StrategyName::BullReversal,
-                                market_type
-                            },
-                            Arc::new(reversal_pattern_params),
-                        ));
-                        m += risk.step;
-                    }
-                }
-            }
-            j += sl.step;
-        }
-        i += tp.step;
-    }
-    backtester.add_strategies(&mut strategies);
-}
-
-fn create_w_and_m_pattern_strategies(
-    backtester: &mut Backtester,
-    tp: ParamMultiplier,
-    sl: ParamMultiplier,
-    min_klines_repetitions: usize,
-    max_klines_repetitions: usize,
-    min_klines_range: usize,
-    max_klines_range: usize,
-    risk: ParamMultiplier,
-    market_type: MarketType
-) {
-    let mut strategies: Vec<Strategy> = Vec::new();
-    let mut i = tp.min;
-    while i <= tp.max {
-        let mut j = sl.min;
-        while j <= sl.max {
-            for k in min_klines_repetitions..=max_klines_repetitions {
-                for l in min_klines_range..=max_klines_range {
-                    let mut m = risk.min;
-                    while m <= risk.max {
-                        let pattern_params_w: Vec<Arc<dyn PatternParams>> =
-                            vec![Arc::new(WPatternParams {
-                                klines_repetitions: k,
-                                klines_range: l,
-                                name: PatternName::W,
-                            })];
-
-                        let pattern_params_m: Vec<Arc<dyn PatternParams>> =
-                            vec![Arc::new(MPatternParams {
-                                klines_repetitions: k,
-                                klines_range: l,
-                                name: PatternName::M,
-                            })];
-
-                        strategies.push((
-                            strategies::create_wpattern_trades,
-                            StrategyParams {
-                                tp_multiplier: i,
-                                sl_multiplier: j,
-                                risk_per_trade: m * 0.01,
-                                money: START_MONEY,
-                                name: StrategyName::W,
-                                market_type
-                            },
-                            Arc::new(pattern_params_w),
-                        ));
-
-                        /*strategies.push((
-                            strategies::create_mpattern_trades,
-                            StrategyParams {
-                                tp_multiplier: i,
-                                sl_multiplier: j,
-                                risk_per_trade: m * 0.01,
-                                money: START_MONEY,
-                                name: StrategyName::M,
-                                market_type
-                            },
-                            Arc::new(pattern_params_m),
-                        ));*/
-                        m += risk.step;
-                    }
-                }
-            }
-            j += sl.step;
-        }
-
-        i += tp.step;
-    }
-
-    backtester.add_strategies(&mut strategies);
 }
 
 fn retreive_test_data(server_time: u64, market: &Market) -> Vec<KlineSummary> {
