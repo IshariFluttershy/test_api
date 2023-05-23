@@ -1,14 +1,18 @@
 Plus c'est en haut, plus c'est prioritaire : 
 
+Ajouter un blocage si on recoit une requete de test quand un test est déja en cours
+creer un tester de stats qui prend les faux trades en temps réel
+Faire un front end
 Implementer un écart de prix minimum dans la prise de trades (patterns) en % du prix actuel 
-Implementer des pertes/gains minimum/maximum dans les prises de trade
 Ajouter un coefficient au calcul du temps estimé pour prendre en compte les stats plus longues que les autres
 trouver comment stocker les fichiers de résultats et l'implementer => on part sur une BDD, faut tester surrealDB || Jvais tester une DB postgres mais faut que je fasse ca sur ma tour vu qu'il faut les droits admin
-Faire un front end
 Passer la création de plusieurs strats en ajout dans une liste d'attente pour la pool de workers.
+
+
 Faire une création de strategies générique qui puisse lire des .json => C'est noté mais pas sur que ca soit une bonne idée
 
 
+Implementer des pertes/gains minimum/maximum dans les prises de trade => DONE
 Accelerer au maximum les calculs / optimiser => Les perfs actuelles sont déja pas mal
 Passer le test d'une strat en mono thread. => DONE
 Refaire le calcul du temps estimé avec la nouvelle methode => DONE
