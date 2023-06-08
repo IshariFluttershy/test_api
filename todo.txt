@@ -1,8 +1,13 @@
 Plus c'est en haut, plus c'est prioritaire : 
 
-Ajouter un blocage si on recoit une requete de test quand un test est déja en cours
-creer un tester de stats qui prend les faux trades en temps réel
-Faire un front end
+Ajouter un blocage si on recoit une requete de test quand un test est déja en cours => DONE je crois (a vérifier)
+creer un tester de stats qui prend les faux trades en temps réel -> en cours mais pour ca il faut : 
+Séparer la création de trades en deux, une partie création de trades potentiels, et une partie validation
+une fois les trades potentiels récupérés dans le live bot, check a chaque changement de prix si ca prend le trade ou pas
+fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl
+
+
+Faire un front end utilitaire juste pour moi
 Implementer un écart de prix minimum dans la prise de trades (patterns) en % du prix actuel 
 Ajouter un coefficient au calcul du temps estimé pour prendre en compte les stats plus longues que les autres
 trouver comment stocker les fichiers de résultats et l'implementer => on part sur une BDD, faut tester surrealDB || Jvais tester une DB postgres mais faut que je fasse ca sur ma tour vu qu'il faut les droits admin
