@@ -2,9 +2,10 @@ Plus c'est en haut, plus c'est prioritaire :
 
 Ajouter un blocage si on recoit une requete de test quand un test est déja en cours => DONE je crois (a vérifier)
 creer un tester de stats qui prend les faux trades en temps réel -> en cours mais pour ca il faut : 
-Séparer la création de trades en deux, une partie création de trades potentiels, et une partie validation
-une fois les trades potentiels récupérés dans le live bot, check a chaque changement de prix si ca prend le trade ou pas
-fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl
+Séparer la création de trades en deux, une partie création de trades potentiels, et une partie validation => DONE a tester néanmoins
+une fois les trades potentiels récupérés dans le live bot, check a chaque changement de prix si ca prend le trade ou pas => DONE a tester encore
+une fois un trade pris, reset les klines pour éviter de prendre des trades en boucle
+fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl 
 
 
 Faire un front end utilitaire juste pour moi
