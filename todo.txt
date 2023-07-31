@@ -4,8 +4,11 @@ Ajouter un blocage si on recoit une requete de test quand un test est déja en c
 creer un tester de stats qui prend les faux trades en temps réel -> en cours mais pour ca il faut : 
 Séparer la création de trades en deux, une partie création de trades potentiels, et une partie validation => DONE a tester néanmoins
 une fois les trades potentiels récupérés dans le live bot, check a chaque changement de prix si ca prend le trade ou pas => DONE a tester encore
-une fois un trade pris, reset les klines pour éviter de prendre des trades en boucle
-fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl 
+une fois un trade pris, reset les klines pour éviter de prendre des trades en boucle => DONE
+Faire une liste des trades ouverts check a chaque changement de prix si ca se ferme en TP ou en SL => DONE
+fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl => DONE
+vérifier si les data des klines qu'on DL correspondent bien aux dernières données => CA MARCHE PAS PUTAIN, je choppe les données d'il y a 16 heures, c'est pénible.
+Du coup faut que je trouve un moyen de renplir mon tableau de klines a analyser, a voir avec l'event @klines
 
 
 Faire un front end utilitaire juste pour moi
