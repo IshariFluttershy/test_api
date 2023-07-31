@@ -8,7 +8,7 @@ une fois un trade pris, reset les klines pour éviter de prendre des trades en b
 Faire une liste des trades ouverts check a chaque changement de prix si ca se ferme en TP ou en SL => DONE
 fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl => DONE
 vérifier si les data des klines qu'on DL correspondent bien aux dernières données => CA MARCHE PAS PUTAIN, je choppe les données d'il y a 16 heures, c'est pénible.
-Du coup faut que je trouve un moyen de renplir mon tableau de klines a analyser, a voir avec l'event @klines
+Du coup faut que je trouve un moyen de renplir mon tableau de klines a analyser, a voir avec l'event @klines => DONE
 
 
 Faire un front end utilitaire juste pour moi
