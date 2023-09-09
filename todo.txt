@@ -1,18 +1,10 @@
 Plus c'est en haut, plus c'est prioritaire : 
 
-Ajouter un blocage si on recoit une requete de test quand un test est déja en cours => DONE je crois (a vérifier)
-creer un tester de stats qui prend les faux trades en temps réel -> en cours mais pour ca il faut : 
-Séparer la création de trades en deux, une partie création de trades potentiels, et une partie validation => DONE a tester néanmoins
-une fois les trades potentiels récupérés dans le live bot, check a chaque changement de prix si ca prend le trade ou pas => DONE a tester encore
-une fois un trade pris, reset les klines pour éviter de prendre des trades en boucle => DONE
-Faire une liste des trades ouverts check a chaque changement de prix si ca se ferme en TP ou en SL => DONE
-fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl => DONE
-vérifier si les data des klines qu'on DL correspondent bien aux dernières données => CA MARCHE PAS PUTAIN, je choppe les données d'il y a 16 heures, c'est pénible.
-Du coup faut que je trouve un moyen de renplir mon tableau de klines a analyser, a voir avec l'event @klines => DONE
-
+Changer la manière de fonctionner de l'étape 3 et 4 du m pattern, la facon de check est completement foireuse pour l'instant, ca donne n'importe quoi. 
+ajouter un système de check de "N répétitions ou plus" sur les deux premiers checks
+Implementer un écart de prix minimum dans la prise de trades (patterns) en % du prix actuel 
 
 Faire un front end utilitaire juste pour moi
-Implementer un écart de prix minimum dans la prise de trades (patterns) en % du prix actuel 
 Ajouter un coefficient au calcul du temps estimé pour prendre en compte les stats plus longues que les autres
 trouver comment stocker les fichiers de résultats et l'implementer => on part sur une BDD, faut tester surrealDB || Jvais tester une DB postgres mais faut que je fasse ca sur ma tour vu qu'il faut les droits admin
 Passer la création de plusieurs strats en ajout dans une liste d'attente pour la pool de workers.
@@ -31,4 +23,13 @@ Faire une queue de dl de données => Done
 Passer l'appli en service web que l'on puisse controler avec des requetes => Done
 Prendre en compte les taxes dans les trades (taker/maker) -> Done
 calculer les leviers necessaires pour le Money management  ---  lever = ((Cap/Cav)-1)/((Pv/Pa)-1) -> Normalement c'est fait 
+Ajouter un blocage si on recoit une requete de test quand un test est déja en cours => DONE je crois (a vérifier)
+creer un tester de stats qui prend les faux trades en temps réel -> en cours mais pour ca il faut : 
+Séparer la création de trades en deux, une partie création de trades potentiels, et une partie validation => DONE a tester néanmoins
+une fois les trades potentiels récupérés dans le live bot, check a chaque changement de prix si ca prend le trade ou pas => DONE a tester encore
+une fois un trade pris, reset les klines pour éviter de prendre des trades en boucle => DONE
+Faire une liste des trades ouverts check a chaque changement de prix si ca se ferme en TP ou en SL => DONE
+fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl => DONE
+vérifier si les data des klines qu'on DL correspondent bien aux dernières données => CA MARCHE PAS PUTAIN, je choppe les données d'il y a 16 heures, c'est pénible.
+Du coup faut que je trouve un moyen de renplir mon tableau de klines a analyser, a voir avec l'event @klines => DONE
 
