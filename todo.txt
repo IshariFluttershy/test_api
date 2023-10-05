@@ -1,16 +1,29 @@
 Plus c'est en haut, plus c'est prioritaire : 
 
-Changer la manière de fonctionner de l'étape 3 et 4 du m pattern, la facon de check est completement foireuse pour l'instant, ca donne n'importe quoi. 
+
+
+LIVE BOT : 
+Faire un front end utilitaire juste pour moi
+Faire un fichier de suivi des résultats des stratégies live (temps d'execution, trades win, trades lose, changement de thunes, etc)
+implementer un système pour pouvoir lancer plusieurs strats en meme temps
+
+BACKTEST API : 
+Faire un front end utilitaire juste pour moi
+Regler le problème de fuite memoire quand on lance plusieurs tests d'affilée
+Ajouter un coefficient au calcul du temps estimé pour prendre en compte les strats plus longues que les autres
+
+BACKTESTER :
 ajouter un système de check de "N répétitions ou plus" sur les deux premiers checks
 Implementer un écart de prix minimum dans la prise de trades (patterns) en % du prix actuel 
-
-Faire un front end utilitaire juste pour moi
-Ajouter un coefficient au calcul du temps estimé pour prendre en compte les stats plus longues que les autres
 trouver comment stocker les fichiers de résultats et l'implementer => on part sur une BDD, faut tester surrealDB || Jvais tester une DB postgres mais faut que je fasse ca sur ma tour vu qu'il faut les droits admin
 Passer la création de plusieurs strats en ajout dans une liste d'attente pour la pool de workers.
-
-
 Faire une création de strategies générique qui puisse lire des .json => C'est noté mais pas sur que ca soit une bonne idée
+
+
+
+
+
+
 
 
 Implementer des pertes/gains minimum/maximum dans les prises de trade => DONE
@@ -32,4 +45,5 @@ Faire une liste des trades ouverts check a chaque changement de prix si ca se fe
 fermer les trades après X klines de X minutes passées sans que ca ouvre le trade OU si ca touche le prix de sl => DONE
 vérifier si les data des klines qu'on DL correspondent bien aux dernières données => CA MARCHE PAS PUTAIN, je choppe les données d'il y a 16 heures, c'est pénible.
 Du coup faut que je trouve un moyen de renplir mon tableau de klines a analyser, a voir avec l'event @klines => DONE
+Changer la manière de fonctionner de l'étape 3 et 4 du m pattern, la facon de check est completement foireuse pour l'instant, ca donne n'importe quoi. => Done
 
