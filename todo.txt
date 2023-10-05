@@ -1,23 +1,24 @@
-Plus c'est en haut, plus c'est prioritaire : 
+Priorités entre parenthese. 1 = Top priorité => 5 = le moins prioritaire
 
-
+TOUS : 
+(2)FAIRE UN GROS CLEAN DU CODE + Gestion d'erreurs + optimisation + Creer notice d'utilisation
 
 LIVE BOT : 
-Faire un front end utilitaire juste pour moi
-Faire un fichier de suivi des résultats des stratégies live (temps d'execution, trades win, trades lose, changement de thunes, etc)
-implementer un système pour pouvoir lancer plusieurs strats en meme temps
+(1) Faire un fichier de suivi des résultats des stratégies live (temps d'execution, trades win, trades lose, changement de thunes, etc)
+(3)Faire un front end utilitaire juste pour moi
+(3)implementer un système pour pouvoir lancer plusieurs strats en meme temps
 
 BACKTEST API : 
-Faire un front end utilitaire juste pour moi
-Regler le problème de fuite memoire quand on lance plusieurs tests d'affilée
-Ajouter un coefficient au calcul du temps estimé pour prendre en compte les strats plus longues que les autres
+(2)Regler le problème de fuite memoire quand on lance plusieurs tests d'affilée
+(4)Faire un front end utilitaire juste pour moi
+(5)Ajouter un coefficient au calcul du temps estimé pour prendre en compte les strats plus longues que les autres
 
 BACKTESTER :
-ajouter un système de check de "N répétitions ou plus" sur les deux premiers checks
-Implementer un écart de prix minimum dans la prise de trades (patterns) en % du prix actuel 
-trouver comment stocker les fichiers de résultats et l'implementer => on part sur une BDD, faut tester surrealDB || Jvais tester une DB postgres mais faut que je fasse ca sur ma tour vu qu'il faut les droits admin
-Passer la création de plusieurs strats en ajout dans une liste d'attente pour la pool de workers.
-Faire une création de strategies générique qui puisse lire des .json => C'est noté mais pas sur que ca soit une bonne idée
+(3)ajouter un système de check de "N répétitions ou plus" sur les deux premiers checks
+(3)Implementer un écart de prix minimum dans la prise de trades (patterns) en % du prix actuel 
+(4)trouver comment stocker les fichiers de résultats et l'implementer => on part sur une BDD, faut tester surrealDB || Jvais tester une DB postgres mais faut que je fasse ca sur ma tour vu qu'il faut les droits admin
+(5)Passer la création de plusieurs strats en ajout dans une liste d'attente pour la pool de workers.
+(5)Faire une création de strategies générique qui puisse lire des .json => C'est noté mais pas sur que ca soit une bonne idée
 
 
 
